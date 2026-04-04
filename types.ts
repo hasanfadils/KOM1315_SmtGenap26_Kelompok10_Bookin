@@ -96,3 +96,30 @@ export interface AuthContextType {
   updateUser: (user: User) => void;
   isAuthenticated: boolean;
 }
+
+export interface AnalyticsData {
+  busyHours: { hour: string; count: number }[];
+  popularFacilities: { name: string; count: number; percentage: number }[];
+  serviceHealth: {
+    activeRequests: number;
+    approvalRate: number;
+    averageWaitTimeMinutes: number;
+    cancellationRate: number;
+  };
+}
+
+export enum NotificationType {
+  BOOKING_STATUS = 'BOOKING_STATUS',
+  SYSTEM = 'SYSTEM'
+}
+
+export interface Notification {
+  id: string;
+  userId: string;
+  title: string;
+  message: string;
+  type: NotificationType;
+  relatedId?: string; // e.g., bookingId
+  isRead: boolean;
+  createdAt: string;
+}

@@ -1,55 +1,69 @@
 import { Facility, ServiceResponse, FacilityStatus } from '../types';
-import { FACILITIES as INITIAL_DATA } from './mockData';
-
-// In-memory store for facilities (initialized with mock data)
-let facilitiesStore: Facility[] = [...INITIAL_DATA];
+import { db } from '../firebase';
+import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, setDoc } from 'firebase/firestore';
 
 export class FacilityService {
   static async getAllFacilities(): Promise<ServiceResponse<Facility[]>> {
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 300));
-    return { success: true, data: facilitiesStore };
+    try {
+      const querySnapshot = await getDocs(collection(db, 'facilities'));
+      const facilities: Facility[] = [];
+      querySnapshot.forEach((doc) => {
+        facilities.push({ id: doc.id, ...doc.data() } as Facility);
+      });
+      return { success: true, data: facilities };
+    } catch (error: any) {
+      console.error("Error fetching facilities:", error);
+      return { success: false, error: error.message || "Gagal mengambil data fasilitas" };
+    }
   }
 
-  static getFacilityById(id: string): Facility | undefined {
-    return facilitiesStore.find(f => f.id === id);
+  static async getFacilityById(id: string): Promise<Facility | undefined> {
+    try {
+      const docRef = doc(db, 'facilities', id);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        return { id: docSnap.id, ...docSnap.data() } as Facility;
+      }
+      return undefined;
+    } catch (error) {
+      console.error("Error fetching facility by id:", error);
+      return undefined;
+    }
   }
 
   static async createFacility(data: Omit<Facility, 'id'>): Promise<ServiceResponse<Facility>> {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const newFacility: Facility = {
+    try {
+      const docRef = await addDoc(collection(db, 'facilities'), {
         ...data,
-        id: Math.random().toString(36).substr(2, 9),
         status: data.status || FacilityStatus.AVAILABLE
-    };
-    
-    facilitiesStore.push(newFacility);
-    return { success: true, data: newFacility };
+      });
+      return { success: true, data: { id: docRef.id, ...data, status: data.status || FacilityStatus.AVAILABLE } as Facility };
+    } catch (error: any) {
+      console.error("Error creating facility:", error);
+      return { success: false, error: error.message || "Gagal membuat fasilitas" };
+    }
   }
 
   static async updateFacility(id: string, updatedData: Partial<Facility>): Promise<ServiceResponse<Facility>> {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const index = facilitiesStore.findIndex(f => f.id === id);
-    if (index === -1) {
-        return { success: false, error: "Fasilitas tidak ditemukan" };
+    try {
+      const docRef = doc(db, 'facilities', id);
+      await updateDoc(docRef, updatedData);
+      
+      const updatedDoc = await getDoc(docRef);
+      return { success: true, data: { id: updatedDoc.id, ...updatedDoc.data() } as Facility };
+    } catch (error: any) {
+      console.error("Error updating facility:", error);
+      return { success: false, error: error.message || "Gagal memperbarui fasilitas" };
     }
-
-    facilitiesStore[index] = { ...facilitiesStore[index], ...updatedData };
-    return { success: true, data: facilitiesStore[index] };
   }
 
   static async deleteFacility(id: string): Promise<ServiceResponse<boolean>> {
-    await new Promise(resolve => setTimeout(resolve, 400));
-    
-    const initialLength = facilitiesStore.length;
-    facilitiesStore = facilitiesStore.filter(f => f.id !== id);
-    
-    if (facilitiesStore.length === initialLength) {
-        return { success: false, error: "Fasilitas tidak ditemukan atau gagal dihapus." };
+    try {
+      await deleteDoc(doc(db, 'facilities', id));
+      return { success: true, data: true };
+    } catch (error: any) {
+      console.error("Error deleting facility:", error);
+      return { success: false, error: error.message || "Gagal menghapus fasilitas" };
     }
-
-    return { success: true, data: true };
   }
 }

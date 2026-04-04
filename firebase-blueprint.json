@@ -1,0 +1,86 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Full name of the user" },
+        "email": { "type": "string", "format": "email", "description": "User's email address" },
+        "nim": { "type": "string", "description": "Student ID number (optional)" },
+        "role": { "type": "string", "enum": ["student", "staff", "admin"], "description": "User role" }
+      },
+      "required": ["name", "email", "role"]
+    },
+    "Facility": {
+      "title": "Facility",
+      "description": "Facility details",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["Auditorium", "Ruang Kelas", "Lapangan", "Laboratorium", "Ruang Rapat"] },
+        "status": { "type": "string", "enum": ["Tersedia", "Pemeliharaan", "Renovasi", "Ditutup Sementara"] },
+        "capacity": { "type": "number" },
+        "location": { "type": "string" },
+        "description": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "features": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["name", "type", "status", "capacity", "location", "description", "imageUrl", "features"]
+    },
+    "Booking": {
+      "title": "Booking",
+      "description": "Facility booking request",
+      "type": "object",
+      "properties": {
+        "facilityId": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "eventName": { "type": "string" },
+        "eventDescription": { "type": "string" },
+        "startTime": { "type": "string", "format": "date-time" },
+        "endTime": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["Menunggu Persetujuan", "Sedang Direview", "Disetujui", "Ditolak", "Selesai"] },
+        "attendees": { "type": "number" },
+        "documentUrl": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "queuePosition": { "type": "number" },
+        "estimatedConfirmationDate": { "type": "string", "format": "date-time" }
+      },
+      "required": ["facilityId", "userId", "userName", "eventName", "eventDescription", "startTime", "endTime", "status", "attendees", "createdAt"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "User notification",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "type": { "type": "string", "enum": ["BOOKING_STATUS", "SYSTEM"] },
+        "relatedId": { "type": "string" },
+        "isRead": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "title", "message", "type", "isRead", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Stores user profiles"
+    },
+    "/facilities/{facilityId}": {
+      "schema": { "$ref": "#/entities/Facility" },
+      "description": "Stores facility data"
+    },
+    "/bookings/{bookingId}": {
+      "schema": { "$ref": "#/entities/Booking" },
+      "description": "Stores booking requests"
+    },
+    "/notifications/{notificationId}": {
+      "schema": { "$ref": "#/entities/Notification" },
+      "description": "Stores user notifications"
+    }
+  }
+}

@@ -1,46 +1,71 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { AuthService } from '../services/authService';
 import { University, Loader2, AlertCircle } from 'lucide-react';
+import { auth, db } from '../firebase';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
+import { User } from '../types';
 
 export const Register: React.FC = () => {
-  const [formData, setFormData] = useState({
-      name: '',
-      email: '',
-      password: '',
-      nim: '',
-      role: 'student' as 'student' | 'staff'
-  });
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-      setFormData({...formData, [e.target.name]: e.target.value});
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (password !== confirmPassword) {
+      setError('Password tidak cocok');
+      return;
+    }
+    if (password.length < 6) {
+      setError('Password minimal 6 karakter');
+      return;
+    }
     setIsLoading(true);
     setError(null);
 
-    const result = await AuthService.register(
-        formData.name,
-        formData.email,
-        formData.password,
-        formData.role,
-        formData.nim
-    );
-    
-    setIsLoading(false);
-    if (result.success && result.data) {
-      login(result.data);
-      navigate('/');
-    } else {
-      setError(result.error || 'Registrasi gagal.');
+    try {
+      const result = await createUserWithEmailAndPassword(auth, email, password);
+      const firebaseUser = result.user;
+      
+      await updateProfile(firebaseUser, { displayName: name });
+
+      const role = email === 'admintls@gmail.com' ? 'admin' : 'student';
+
+      const userData: User = {
+        id: firebaseUser.uid,
+        name: name,
+        email: email,
+        role: role,
+      };
+
+      await setDoc(doc(db, 'users', firebaseUser.uid), userData);
+      login(userData);
+      
+      if (role === 'admin') {
+          navigate('/admin/dashboard');
+      } else {
+          navigate('/');
+      }
+    } catch (err: any) {
+      console.error("Register error:", err);
+      // Handle specific Firebase errors
+      if (err.code === 'auth/email-already-in-use') {
+        setError('Email sudah terdaftar. Silakan gunakan email lain atau login.');
+      } else if (err.code === 'auth/operation-not-allowed') {
+        setError('Pendaftaran dengan Email/Password belum diaktifkan di Firebase Console.');
+      } else {
+        setError(err.message || 'Gagal mendaftar.');
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -55,6 +80,9 @@ export const Register: React.FC = () => {
         <h2 className="mt-6 text-center text-3xl font-extrabold text-slate-900 tracking-tight">
           Daftar Akun Baru
         </h2>
+        <p className="mt-2 text-center text-sm text-slate-600 font-medium">
+          Tools Lab Sharing IPB University
+        </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
@@ -66,44 +94,56 @@ export const Register: React.FC = () => {
             </div>
           )}
           
-          <form className="space-y-6" onSubmit={handleSubmit}>
+          <form className="space-y-6" onSubmit={handleRegister}>
             <div>
-              <label htmlFor="name" className="block text-sm font-bold text-slate-700">Nama Lengkap</label>
+              <label className="block text-sm font-medium text-slate-700">Nama Lengkap</label>
               <div className="mt-1">
-                <input id="name" name="name" type="text" required value={formData.name} onChange={handleChange} className="appearance-none block w-full px-3 py-2.5 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-ipb-blue focus:border-ipb-blue sm:text-sm bg-white text-slate-900 font-medium" />
+                <input
+                  type="text"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="appearance-none block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-ipb-blue focus:border-ipb-blue sm:text-sm"
+                />
               </div>
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-bold text-slate-700">Email</label>
+              <label className="block text-sm font-medium text-slate-700">Email</label>
               <div className="mt-1">
-                <input id="email" name="email" type="email" required value={formData.email} onChange={handleChange} className="appearance-none block w-full px-3 py-2.5 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-ipb-blue focus:border-ipb-blue sm:text-sm bg-white text-slate-900 font-medium" />
-              </div>
-            </div>
-            
-            <div>
-              <label htmlFor="role" className="block text-sm font-bold text-slate-700">Kategori</label>
-              <div className="mt-1">
-                <select id="role" name="role" value={formData.role} onChange={handleChange} className="block w-full px-3 py-2.5 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-ipb-blue focus:border-ipb-blue sm:text-sm bg-white text-slate-900 font-medium">
-                    <option value="student">Mahasiswa</option>
-                    <option value="staff">Tendik / Dosen</option>
-                </select>
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="appearance-none block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-ipb-blue focus:border-ipb-blue sm:text-sm"
+                />
               </div>
             </div>
 
-            {formData.role === 'student' && (
-                <div>
-                    <label htmlFor="nim" className="block text-sm font-bold text-slate-700">NIM</label>
-                    <div className="mt-1">
-                        <input id="nim" name="nim" type="text" required value={formData.nim} onChange={handleChange} className="appearance-none block w-full px-3 py-2.5 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-ipb-blue focus:border-ipb-blue sm:text-sm bg-white text-slate-900 font-medium" />
-                    </div>
-                </div>
-            )}
+            <div>
+              <label className="block text-sm font-medium text-slate-700">Password</label>
+              <div className="mt-1">
+                <input
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="appearance-none block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-ipb-blue focus:border-ipb-blue sm:text-sm"
+                />
+              </div>
+            </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-bold text-slate-700">Kata Sandi</label>
+              <label className="block text-sm font-medium text-slate-700">Konfirmasi Password</label>
               <div className="mt-1">
-                <input id="password" name="password" type="password" required value={formData.password} onChange={handleChange} className="appearance-none block w-full px-3 py-2.5 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-ipb-blue focus:border-ipb-blue sm:text-sm bg-white text-slate-900 font-medium" />
+                <input
+                  type="password"
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="appearance-none block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-ipb-blue focus:border-ipb-blue sm:text-sm"
+                />
               </div>
             </div>
 
@@ -111,17 +151,31 @@ export const Register: React.FC = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-md text-sm font-bold text-white bg-ipb-blue hover:bg-ipb-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ipb-blue transition-all disabled:opacity-70"
+                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-ipb-blue hover:bg-ipb-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ipb-blue disabled:opacity-70"
               >
-                {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Daftar Sekarang'}
+                {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Daftar'}
               </button>
             </div>
           </form>
-          
-           <div className="mt-6 text-center">
-             <Link to="/login" className="text-sm font-bold text-ipb-blue hover:text-ipb-dark hover:underline">
-                Sudah punya akun? Masuk di sini
-             </Link>
+
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-slate-300" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-slate-500">Sudah punya akun?</span>
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <Link
+                to="/login"
+                className="w-full flex justify-center py-2 px-4 border border-slate-300 rounded-md shadow-sm text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ipb-blue"
+              >
+                Masuk di sini
+              </Link>
+            </div>
           </div>
         </div>
       </div>

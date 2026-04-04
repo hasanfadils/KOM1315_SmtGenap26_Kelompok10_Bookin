@@ -28,14 +28,17 @@ export const FacilityEditor: React.FC = () => {
     }
     
     if (!isNew && id) {
-        const data = FacilityService.getFacilityById(id);
-        if (data) {
-            setFormData(data);
-        } else {
-            setError("Fasilitas tidak ditemukan.");
-        }
+        FacilityService.getFacilityById(id).then(data => {
+            if (data) {
+                setFormData(data);
+            } else {
+                setError("Fasilitas tidak ditemukan.");
+            }
+            setLoading(false);
+        });
+    } else {
+        setLoading(false);
     }
-    setLoading(false);
   }, [id, isAuthenticated, user, isNew]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {

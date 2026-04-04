@@ -26,12 +26,13 @@ export const AdminDashboard: React.FC = () => {
 
   const loadData = async () => {
     setLoading(true);
+    // Load facilities always so we can map names
+    const facRes = await FacilityService.getAllFacilities();
+    if (facRes.data) setFacilities(facRes.data);
+
     if (activeTab === 'bookings') {
         const res = await BookingService.getAllBookings();
         if (res.data) setBookings(res.data);
-    } else {
-        const res = await FacilityService.getAllFacilities();
-        if (res.data) setFacilities(res.data);
     }
     setLoading(false);
   };
@@ -165,7 +166,7 @@ export const AdminDashboard: React.FC = () => {
                                                 </div>
                                                 <div className="flex items-center">
                                                     <MapPin className="h-4 w-4 mr-1.5" />
-                                                    {FacilityService.getFacilityById(booking.facilityId)?.name || booking.facilityId}
+                                                    {facilities.find(f => f.id === booking.facilityId)?.name || booking.facilityId}
                                                 </div>
                                                 <div className="flex items-center">
                                                     <Users className="h-4 w-4 mr-1.5" />

@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { BookingService } from '../services/bookingService';
+import { FacilityService } from '../services/facilityService';
 import { Booking, BookingStatus, Facility } from '../types';
-import { FACILITIES } from '../services/mockData';
 import { useAuth } from '../context/AuthContext';
 import { Clock, CheckCircle, XCircle, Calendar, MapPin, Loader2, Hourglass, TrendingUp, User, FileSearch } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 export const MyBookings: React.FC = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [facilities, setFacilities] = useState<Record<string, Facility>>({});
   const [loading, setLoading] = useState(true);
   const { user, isAuthenticated } = useAuth();
   const location = useLocation();
@@ -17,17 +18,28 @@ export const MyBookings: React.FC = () => {
     if (!user) return;
     setLoading(true);
     
-    let res;
-    if (user.role === 'admin') {
-        res = await BookingService.getAllBookings();
-    } else {
-        res = await BookingService.getUserBookings(user.id);
-    }
+    try {
+      const [bookingsRes, facilitiesRes] = await Promise.all([
+        user.role === 'admin' ? BookingService.getAllBookings() : BookingService.getUserBookings(user.id),
+        FacilityService.getAllFacilities()
+      ]);
 
-    if (res.data) {
-      setBookings(res.data);
+      if (facilitiesRes.success && facilitiesRes.data) {
+        const facMap: Record<string, Facility> = {};
+        facilitiesRes.data.forEach(f => {
+          facMap[f.id] = f;
+        });
+        setFacilities(facMap);
+      }
+
+      if (bookingsRes.data) {
+        setBookings(bookingsRes.data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch data", error);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -39,20 +51,14 @@ export const MyBookings: React.FC = () => {
     fetchBookings();
     
     const interval = setInterval(() => {
-        if (user) {
-             if (user.role === 'admin') {
-                BookingService.getAllBookings().then(res => { if(res.data) setBookings(res.data) });
-            } else {
-                BookingService.getUserBookings(user.id).then(res => { if(res.data) setBookings(res.data) });
-            }
-        }
+        fetchBookings();
     }, 30000);
 
     return () => clearInterval(interval);
   }, [location.state, isAuthenticated, user]);
 
   const getFacilityDetails = (id: string): Facility | undefined => {
-    return FACILITIES.find(f => f.id === id);
+    return facilities[id];
   };
 
   const getStatusColor = (status: BookingStatus) => {

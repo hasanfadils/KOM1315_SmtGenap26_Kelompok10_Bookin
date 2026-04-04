@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, SlidersHorizontal } from 'lucide-react';
+import { Search, SlidersHorizontal, X } from 'lucide-react';
 import { FacilityService } from '../services/facilityService';
 import { FacilityCard } from '../components/FacilityCard';
 import { Facility, FacilityType } from '../types';
@@ -10,6 +10,7 @@ export const FacilityList: React.FC = () => {
   const [filterType, setFilterType] = useState<string>('All');
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [displayedFacilities, setDisplayedFacilities] = useState<Facility[]>([]);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   
   const navigate = useNavigate();
   const location = useLocation();
@@ -64,35 +65,58 @@ export const FacilityList: React.FC = () => {
         </div>
       </div>
 
-      {/* Search & Filter Bar */}
-      <div className="bg-white p-3 rounded-2xl shadow-lg border border-slate-200 mb-10 sticky top-24 z-30 transition-shadow">
-        <div className="flex flex-col md:flex-row gap-3">
-            <div className="flex-1 relative group">
+      {/* Search & Filter Bar - Expanded Design */}
+      <div 
+        className={`bg-white p-2 rounded-2xl border mb-10 sticky top-24 z-30 transition-all duration-300 ease-out 
+        ${isSearchFocused ? 'shadow-2xl border-ipb-blue ring-4 ring-ipb-blue/10 transform scale-[1.01]' : 'shadow-lg border-slate-200'}`}
+      >
+        <div className="flex flex-col md:flex-row gap-2 items-stretch">
+            {/* Search Input Wrapper - Expands heavily on desktop when focused */}
+            <div className={`relative group transition-all duration-500 ease-in-out ${isSearchFocused ? 'md:flex-[2]' : 'md:flex-[1]'}`}>
+                <Search className={`absolute left-4 top-3.5 h-5 w-5 transition-colors duration-300 ${isSearchFocused ? 'text-ipb-blue' : 'text-slate-400'}`} />
                 <input 
                     type="text" 
                     placeholder="Cari nama gedung, lokasi..."
-                    className="w-full pl-12 pr-4 py-3.5 bg-white border border-slate-300 rounded-xl focus:ring-4 focus:ring-ipb-blue/10 focus:border-ipb-blue transition-all font-semibold text-slate-800 placeholder-slate-400 shadow-sm"
+                    className={`w-full pl-12 pr-10 py-3 rounded-xl border-2 focus:outline-none transition-all duration-300 font-bold text-slate-800 placeholder-slate-400 ${
+                        isSearchFocused 
+                        ? 'bg-white border-transparent' 
+                        : 'bg-slate-50 border-transparent hover:bg-slate-100'
+                    }`}
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
+                    onFocus={() => setIsSearchFocused(true)}
+                    onBlur={() => setIsSearchFocused(false)}
                 />
-                <Search className="absolute left-4 top-4 h-5 w-5 text-slate-400 group-focus-within:text-ipb-blue transition-colors" />
+                
+                {/* Clear Button */}
+                {search && (
+                    <button 
+                        onClick={() => setSearch('')}
+                        className="absolute right-3 top-3 p-1 rounded-full bg-slate-200 text-slate-500 hover:bg-slate-300 hover:text-red-500 transition-colors z-10"
+                    >
+                        <X className="h-3 w-3" />
+                    </button>
+                )}
             </div>
             
-            <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 px-2 no-scrollbar border-l border-slate-200 pl-4">
-                 <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mr-2 hidden md:block">Filter:</span>
-                 {['All', ...Object.values(FacilityType)].map(type => (
-                     <button 
-                        key={type}
-                        onClick={() => setFilterType(type)}
-                        className={`px-4 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all duration-200 border ${
-                            filterType === type 
-                            ? 'bg-ipb-blue text-white border-ipb-blue shadow-md' 
-                            : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 hover:border-slate-300'
-                        }`}
-                     >
-                        {type === 'All' ? 'Semua Tipe' : type}
-                     </button>
-                 ))}
+            {/* Filter Section - Scrolls horizontally on mobile, compressed on desktop focus */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 px-2 no-scrollbar md:border-l md:border-slate-100 md:pl-4 transition-all duration-300">
+                 <div className={`flex items-center gap-1.5 transition-opacity duration-300 ${isSearchFocused ? 'opacity-50 hover:opacity-100' : 'opacity-100'}`}>
+                     <SlidersHorizontal className="h-4 w-4 text-slate-400 hidden md:block" />
+                     {['All', ...Object.values(FacilityType)].map(type => (
+                         <button 
+                            key={type}
+                            onClick={() => setFilterType(type)}
+                            className={`px-4 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all duration-200 border ${
+                                filterType === type 
+                                ? 'bg-ipb-blue text-white border-ipb-blue shadow-md' 
+                                : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 hover:border-slate-300'
+                            }`}
+                         >
+                            {type === 'All' ? 'Semua' : type}
+                         </button>
+                     ))}
+                 </div>
             </div>
         </div>
       </div>

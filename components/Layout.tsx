@@ -1,7 +1,8 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Search, Calendar, Menu, X, University, UserCircle, LogOut, ChevronDown, User } from 'lucide-react';
+import { LayoutDashboard, Search, Calendar, Menu, X, University, UserCircle, LogOut, ChevronDown, User, Bell } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { NotificationCenter } from './NotificationCenter';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -53,8 +54,17 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               <Link to="/facilities" className={isActive('/facilities')}>Daftar Fasilitas</Link>
               
               {isAuthenticated && user?.role === 'admin' ? (
-                 <Link to="/admin/dashboard" className={isActive('/admin/dashboard')}>
-                    Admin Dashboard
+                 <>
+                    <Link to="/admin/dashboard" className={isActive('/admin/dashboard')}>
+                        Admin Dashboard
+                    </Link>
+                    <Link to="/admin/users" className={isActive('/admin/users')}>
+                        Users
+                    </Link>
+                 </>
+              ) : isAuthenticated && user?.role === 'staff' ? (
+                 <Link to="/tendik/dashboard" className={isActive('/tendik/dashboard')}>
+                    Kelola Pengajuan
                  </Link>
               ) : isAuthenticated ? (
                  <Link to="/my-bookings" className={isActive('/my-bookings')}>
@@ -64,7 +74,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               
               <div className="ml-6 pl-6 border-l border-blue-800/50 flex items-center gap-4">
                   {isAuthenticated ? (
-                    <div className="flex items-center gap-3 group relative cursor-pointer p-1 rounded-full hover:bg-blue-800/50 transition-all pr-3 group border border-transparent hover:border-blue-700">
+                    <div className="flex items-center gap-4">
+                      <NotificationCenter />
+                      <div className="flex items-center gap-3 group relative cursor-pointer p-1 rounded-full hover:bg-blue-800/50 transition-all pr-3 group border border-transparent hover:border-blue-700">
                         <div className="h-9 w-9 rounded-full bg-gradient-to-br from-ipb-accent to-yellow-600 flex items-center justify-center text-white font-bold shadow-md border-2 border-blue-800">
                              {user?.name.charAt(0).toUpperCase()}
                         </div>
@@ -88,6 +100,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                         
                         <ChevronDown className="h-4 w-4 text-white/80 ml-1" />
                     </div>
+                  </div>
                   ) : (
                     <div className="flex items-center gap-3">
                         <Link to="/login" className="text-white hover:text-blue-100 text-sm font-bold px-4 py-2">Masuk</Link>
@@ -117,8 +130,17 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               <Link to="/facilities" onClick={() => setIsMenuOpen(false)} className="text-white block px-4 py-3 rounded-xl text-base font-bold hover:bg-white/10 transition-colors">Daftar Fasilitas</Link>
               
               {isAuthenticated && user?.role === 'admin' ? (
-                <Link to="/admin/dashboard" onClick={() => setIsMenuOpen(false)} className="text-white block px-4 py-3 rounded-xl text-base font-bold hover:bg-white/10 transition-colors">
-                    Admin Dashboard
+                <>
+                    <Link to="/admin/dashboard" onClick={() => setIsMenuOpen(false)} className="text-white block px-4 py-3 rounded-xl text-base font-bold hover:bg-white/10 transition-colors">
+                        Admin Dashboard
+                    </Link>
+                    <Link to="/admin/users" onClick={() => setIsMenuOpen(false)} className="text-white block px-4 py-3 rounded-xl text-base font-bold hover:bg-white/10 transition-colors">
+                        Manajemen User
+                    </Link>
+                </>
+              ) : isAuthenticated && user?.role === 'staff' ? (
+                <Link to="/tendik/dashboard" onClick={() => setIsMenuOpen(false)} className="text-white block px-4 py-3 rounded-xl text-base font-bold hover:bg-white/10 transition-colors">
+                    Kelola Pengajuan
                 </Link>
               ) : isAuthenticated ? (
                 <Link to="/my-bookings" onClick={() => setIsMenuOpen(false)} className="text-white block px-4 py-3 rounded-xl text-base font-bold hover:bg-white/10 transition-colors">
