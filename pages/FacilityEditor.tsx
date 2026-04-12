@@ -18,6 +18,7 @@ export const FacilityEditor: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
   const isNew = id === 'new';
 
@@ -58,14 +59,40 @@ export const FacilityEditor: React.FC = () => {
     let res;
     if (isNew) {
         // Validation for required fields for creation
-        if(!formData.name || !formData.capacity || !formData.location) {
-             setError("Harap isi Nama, Kapasitas, dan Lokasi.");
-             setSaving(false);
-             return;
-        }
-        res = await FacilityService.createFacility(formData as Omit<Facility, 'id'>);
+         if(!formData.name || !formData.capacity || !formData.location) {
+              setError("Harap isi Nama, Kapasitas, dan Lokasi.");
+              setSaving(false);
+              return;
+         }
+
+         let finalImageUrl = formData.imageUrl;
+         if (imageFile) {
+             const uploadRes = await FacilityService.uploadImage(imageFile);
+             if (uploadRes.success && uploadRes.data) {
+                 finalImageUrl = "http://localhost:8000" + uploadRes.data.url;
+             } else {
+                 setError(uploadRes.error || "Gagal mengupload gambar.");
+                 setSaving(false);
+                 return;
+             }
+         }
+
+         const rawData = { ...formData, imageUrl: finalImageUrl };
+         res = await FacilityService.createFacility(rawData as Omit<Facility, 'id'>);
     } else if (id) {
-        res = await FacilityService.updateFacility(id, formData);
+        let finalImageUrl = formData.imageUrl;
+        if (imageFile) {
+             const uploadRes = await FacilityService.uploadImage(imageFile);
+             if (uploadRes.success && uploadRes.data) {
+                 finalImageUrl = "http://localhost:8000" + uploadRes.data.url;
+             } else {
+                 setError(uploadRes.error || "Gagal mengupload gambar.");
+                 setSaving(false);
+                 return;
+             }
+        }
+        const rawData = { ...formData, imageUrl: finalImageUrl };
+        res = await FacilityService.updateFacility(id, rawData);
     } else {
         res = { success: false, error: "Invalid Operation" };
     }
@@ -167,12 +194,22 @@ export const FacilityEditor: React.FC = () => {
                 </div>
 
                 <div className="md:col-span-2">
-                    <label className="block text-sm font-bold text-slate-700 mb-1">URL Gambar</label>
+                    <label className="block text-sm font-bold text-slate-700 mb-1">Foto Fasilitas ({isNew ? 'Wajib' : 'Opsional'})</label>
                     <input 
-                        type="text" name="imageUrl" value={formData.imageUrl || ''} onChange={handleChange}
-                        className="w-full rounded-lg border border-slate-300 bg-white text-slate-900 focus:ring-4 focus:ring-ipb-blue/10 focus:border-ipb-blue px-4 py-2"
-                        placeholder="https://..."
+                        type="file" 
+                        accept="image/*"
+                        onChange={(e) => {
+                            if (e.target.files && e.target.files[0]) {
+                                setImageFile(e.target.files[0]);
+                            }
+                        }}
+                        className="w-full rounded-lg border border-slate-300 bg-white text-slate-900 px-4 py-2 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-ipb-blue/10 file:text-ipb-blue hover:file:bg-ipb-blue/20"
                     />
+                    {!isNew && formData.imageUrl && !imageFile && (
+                        <p className="text-xs text-slate-500 mt-2">
+                            Gambar saat ini: <a href={formData.imageUrl} target="_blank" rel="noreferrer" className="text-ipb-blue underline">Lihat Gambar</a>
+                        </p>
+                    )}
                 </div>
 
                 <div className="md:col-span-2">

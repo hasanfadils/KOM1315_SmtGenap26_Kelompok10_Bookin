@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { University, Loader2, AlertCircle } from 'lucide-react';
-import { auth, db } from '../firebase';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { api } from '../services/api';
 import { User } from '../types';
+
+const TOKEN_KEY = 'auth_token';
 
 export const Register: React.FC = () => {
   const [name, setName] = useState('');
@@ -32,38 +32,18 @@ export const Register: React.FC = () => {
     setError(null);
 
     try {
-      const result = await createUserWithEmailAndPassword(auth, email, password);
-      const firebaseUser = result.user;
-      
-      await updateProfile(firebaseUser, { displayName: name });
-
-      const role = email === 'admintls@gmail.com' ? 'admin' : 'student';
-
-      const userData: User = {
-        id: firebaseUser.uid,
-        name: name,
-        email: email,
-        role: role,
-      };
-
-      await setDoc(doc(db, 'users', firebaseUser.uid), userData);
-      login(userData);
-      
-      if (role === 'admin') {
-          navigate('/admin/dashboard');
-      } else {
-          navigate('/');
-      }
+      const response = await api.post<{ access_token: string; user: User }>('/auth/register', {
+        name,
+        email,
+        password,
+        role: 'student',
+      });
+      localStorage.setItem(TOKEN_KEY, response.access_token);
+      login(response.user);
+      navigate('/');
     } catch (err: any) {
-      console.error("Register error:", err);
-      // Handle specific Firebase errors
-      if (err.code === 'auth/email-already-in-use') {
-        setError('Email sudah terdaftar. Silakan gunakan email lain atau login.');
-      } else if (err.code === 'auth/operation-not-allowed') {
-        setError('Pendaftaran dengan Email/Password belum diaktifkan di Firebase Console.');
-      } else {
-        setError(err.message || 'Gagal mendaftar.');
-      }
+      console.error('Register error:', err);
+      setError(err.message || 'Gagal mendaftar.');
     } finally {
       setIsLoading(false);
     }

@@ -1,69 +1,91 @@
 import { Facility, ServiceResponse, FacilityStatus } from '../types';
-import { db } from '../firebase';
-import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, setDoc } from 'firebase/firestore';
+import { api } from './api';
 
 export class FacilityService {
   static async getAllFacilities(): Promise<ServiceResponse<Facility[]>> {
     try {
-      const querySnapshot = await getDocs(collection(db, 'facilities'));
-      const facilities: Facility[] = [];
-      querySnapshot.forEach((doc) => {
-        facilities.push({ id: doc.id, ...doc.data() } as Facility);
-      });
-      return { success: true, data: facilities };
+      const data = await api.get<any[]>('/facilities');
+      return { success: true, data: data.map(_mapFacility) };
     } catch (error: any) {
-      console.error("Error fetching facilities:", error);
-      return { success: false, error: error.message || "Gagal mengambil data fasilitas" };
+      return { success: false, error: error.message || 'Gagal mengambil data fasilitas' };
     }
   }
 
   static async getFacilityById(id: string): Promise<Facility | undefined> {
     try {
-      const docRef = doc(db, 'facilities', id);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        return { id: docSnap.id, ...docSnap.data() } as Facility;
-      }
-      return undefined;
-    } catch (error) {
-      console.error("Error fetching facility by id:", error);
+      const raw = await api.get<any>(`/facilities/${id}`);
+      return _mapFacility(raw);
+    } catch {
       return undefined;
     }
   }
 
   static async createFacility(data: Omit<Facility, 'id'>): Promise<ServiceResponse<Facility>> {
     try {
-      const docRef = await addDoc(collection(db, 'facilities'), {
-        ...data,
-        status: data.status || FacilityStatus.AVAILABLE
-      });
-      return { success: true, data: { id: docRef.id, ...data, status: data.status || FacilityStatus.AVAILABLE } as Facility };
+      // Map camelCase frontend ke snake_case backend
+      const payload = {
+        name: data.name,
+        type: data.type,
+        status: data.status || FacilityStatus.AVAILABLE,
+        capacity: data.capacity,
+        location: data.location,
+        description: data.description,
+        image_url: data.imageUrl,
+        features: data.features,
+      };
+      const result = await api.post<Facility>('/facilities', payload);
+      return { success: true, data: _mapFacility(result) };
     } catch (error: any) {
-      console.error("Error creating facility:", error);
-      return { success: false, error: error.message || "Gagal membuat fasilitas" };
+      return { success: false, error: error.message || 'Gagal membuat fasilitas' };
     }
   }
 
   static async updateFacility(id: string, updatedData: Partial<Facility>): Promise<ServiceResponse<Facility>> {
     try {
-      const docRef = doc(db, 'facilities', id);
-      await updateDoc(docRef, updatedData);
-      
-      const updatedDoc = await getDoc(docRef);
-      return { success: true, data: { id: updatedDoc.id, ...updatedDoc.data() } as Facility };
+      const payload: Record<string, unknown> = { ...updatedData };
+      if ('imageUrl' in updatedData) {
+        payload['image_url'] = updatedData.imageUrl;
+        delete payload['imageUrl'];
+      }
+      const result = await api.put<Facility>(`/facilities/${id}`, payload);
+      return { success: true, data: _mapFacility(result) };
     } catch (error: any) {
-      console.error("Error updating facility:", error);
-      return { success: false, error: error.message || "Gagal memperbarui fasilitas" };
+      return { success: false, error: error.message || 'Gagal memperbarui fasilitas' };
     }
   }
 
   static async deleteFacility(id: string): Promise<ServiceResponse<boolean>> {
     try {
-      await deleteDoc(doc(db, 'facilities', id));
+      await api.del(`/facilities/${id}`);
       return { success: true, data: true };
     } catch (error: any) {
-      console.error("Error deleting facility:", error);
-      return { success: false, error: error.message || "Gagal menghapus fasilitas" };
+      return { success: false, error: error.message || 'Gagal menghapus fasilitas' };
     }
   }
+
+  static async uploadImage(file: File): Promise<ServiceResponse<{ url: string }>> {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const data = await api.postForm<{ url: string }>('/facilities/upload-image', formData);
+      return { success: true, data };
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Gagal mengunggah foto fasilitas' };
+    }
+  }
+}
+
+// Helper: map snake_case dari backend ke camelCase Facility interface
+function _mapFacility(raw: any): Facility {
+  return {
+    id: raw.id,
+    name: raw.name,
+    type: raw.type,
+    status: raw.status,
+    capacity: raw.capacity,
+    location: raw.location,
+    description: raw.description,
+    imageUrl: raw.image_url ?? raw.imageUrl,
+    features: raw.features,
+  };
 }
