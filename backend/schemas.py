@@ -123,6 +123,20 @@ class BookingOut(BaseModel):
         from_attributes = True
 
 
+class PublicBookingOut(BaseModel):
+    """Schema publik — tanpa info user sensitif, untuk kalender beranda."""
+    id: str
+    facility_id: str
+    event_name: str
+    start_time: datetime
+    end_time: datetime
+    attendees: int
+    status: BookingStatus
+
+    class Config:
+        from_attributes = True
+
+
 # ===========================
 # NOTIFICATION SCHEMAS
 # ===========================

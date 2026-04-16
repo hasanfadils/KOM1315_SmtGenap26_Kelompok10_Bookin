@@ -188,6 +188,22 @@ def get_my_bookings(
     return result
 
 
+@router.get("/public", response_model=List[schemas.PublicBookingOut])
+def get_public_bookings(
+    facility_id: Optional[str] = None,
+    db: Session = Depends(get_db),
+):
+    """Ambil semua booking yang sudah disetujui (publik, tanpa autentikasi)."""
+    query = db.query(models.Booking).filter(
+        models.Booking.status == models.BookingStatus.APPROVED
+    )
+    if facility_id:
+        query = query.filter(models.Booking.facility_id == facility_id)
+
+    bookings = query.order_by(models.Booking.start_time.asc()).all()
+    return bookings
+
+
 @router.get("/{booking_id}", response_model=schemas.BookingOut)
 def get_booking(
     booking_id: str,

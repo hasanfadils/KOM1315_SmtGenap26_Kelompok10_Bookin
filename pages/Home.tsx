@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, ArrowRight, Sparkles } from 'lucide-react';
 import { AnalyticsDashboard } from '../components/AnalyticsDashboard';
+import { BookingCalendar } from '../components/BookingCalendar';
 
 export const Home: React.FC = () => {
   const [query, setQuery] = useState('');
@@ -85,6 +86,9 @@ export const Home: React.FC = () => {
               ))}
           </div>
       </div>
+
+      {/* Booking Calendar per Facility */}
+      <BookingCalendar />
 
       {/* Features Grid with Data Visualization */}
       <AnalyticsDashboard />

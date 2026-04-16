@@ -56,7 +56,7 @@ export class BookingService {
       formData.append('date', dto.date);
       formData.append('start_time', dto.startTime);
       formData.append('end_time', dto.endTime);
-      formData.append('attendees', dto.attendees.toString());
+      formData.append('attendees', String(Math.round(Number(dto.attendees))));
       if (dto.documentFile) {
         formData.append('document', dto.documentFile);
       }
@@ -74,6 +74,16 @@ export class BookingService {
       return { success: true, data: raw.map(_mapBooking) };
     } catch (error: any) {
       return { success: false, error: error.message || 'Gagal mengambil data peminjaman' };
+    }
+  }
+
+  static async getPublicBookings(facilityId?: string): Promise<ServiceResponse<Booking[]>> {
+    try {
+      const query = facilityId ? `?facility_id=${facilityId}` : '';
+      const raw = await api.get<any[]>(`/bookings/public${query}`);
+      return { success: true, data: raw.map(_mapBooking) };
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Gagal mengambil data jadwal' };
     }
   }
 

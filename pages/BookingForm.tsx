@@ -47,7 +47,14 @@ export const BookingForm: React.FC = () => {
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    if (name === 'attendees') {
+      // Parse as number explicitly to avoid off-by-one from string/number coercion
+      const numVal = value === '' ? '' : parseInt(value, 10);
+      setFormData(prev => ({ ...prev, [name]: isNaN(numVal as number) ? '' : numVal }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleDateChange = (date: string) => {

@@ -50,13 +50,16 @@ export const NotificationCenter: React.FC = () => {
     <div className="relative">
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 text-slate-600 hover:text-ipb-blue hover:bg-slate-100 rounded-full transition-colors"
+        className="relative p-2 text-white hover:text-ipb-accent hover:bg-white/10 rounded-full transition-colors"
       >
         <Bell className="h-6 w-6" />
         {unreadCount > 0 && (
-          <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
-            {unreadCount}
-          </span>
+          <>
+            <span className="absolute top-0 right-0 inline-flex h-5 w-5 translate-x-1/3 -translate-y-1/3 rounded-full bg-red-400 opacity-75 animate-ping"></span>
+            <span className="absolute top-0 right-0 inline-flex items-center justify-center min-w-[22px] h-[22px] px-1.5 text-[11px] font-extrabold leading-none text-white translate-x-1/3 -translate-y-1/3 bg-red-500 rounded-full ring-2 ring-white shadow-lg">
+              {unreadCount}
+            </span>
+          </>
         )}
       </button>
 
