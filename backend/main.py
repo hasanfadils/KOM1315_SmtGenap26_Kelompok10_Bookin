@@ -1,4 +1,6 @@
 import os
+import logging
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -11,10 +13,25 @@ from routers import auth_router, user_router, facility_router, booking_router, n
 
 load_dotenv()
 
+logger = logging.getLogger("uvicorn.error")
+
+
 # ===========================
-# INISIALISASI TABEL DATABASE
+# LIFESPAN: INISIALISASI DB SAAT STARTUP
 # ===========================
-Base.metadata.create_all(bind=engine)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: coba buat tabel database
+    try:
+        Base.metadata.create_all(bind=engine)
+        logger.info("✅ Database tables created successfully")
+    except Exception as e:
+        logger.error(f"⚠️ Failed to create database tables: {e}")
+        logger.error("App will start but database operations may fail")
+    yield
+    # Shutdown: cleanup jika diperlukan
+    logger.info("Shutting down...")
+
 
 # ===========================
 # FASTAPI APP
@@ -28,6 +45,7 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
+    lifespan=lifespan,
 )
 
 # ===========================
