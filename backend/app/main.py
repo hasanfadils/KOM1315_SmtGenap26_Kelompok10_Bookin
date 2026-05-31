@@ -110,6 +110,8 @@ async def custom_cors_middleware(request: Request, call_next):
 # ── Berkas Statis (Uploads)  ──
 
 os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+os.makedirs(os.path.join(settings.UPLOAD_DIR, "public"), exist_ok=True)
+app.mount("/uploads/public", StaticFiles(directory=os.path.join(settings.UPLOAD_DIR, "public")), name="public_uploads")
 
 from fastapi import Depends
 from fastapi.responses import FileResponse

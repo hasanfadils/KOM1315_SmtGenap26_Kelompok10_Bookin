@@ -28,7 +28,7 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({ facility, onBook }) 
       <div className="relative h-52 overflow-hidden border-b border-slate-100">
         <div className="absolute inset-0 bg-slate-900/10 group-hover:bg-slate-900/0 transition-colors z-10"></div>
         <img 
-            src={facility.imageUrl} 
+            src={facility.imageUrl?.startsWith('/') ? `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${facility.imageUrl}` : facility.imageUrl} 
             alt={facility.name} 
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
         />

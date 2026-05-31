@@ -63,21 +63,45 @@ class RuanganService:
         return name
 
     def upload_image(self, file: UploadFile) -> str:
-        """Unggah gambar ke Cloudinary. Mengembalikan URL aman."""
+        """Unggah gambar ke Cloudinary atau fallback ke penyimpanan lokal."""
         if not file.content_type or not file.content_type.startswith("image/"):
             raise AppException("File harus berupa gambar", 400)
 
-        try:
-            import cloudinary
-            import cloudinary.uploader
+        # Jika API key Cloudinary dikonfigurasi, gunakan Cloudinary
+        if settings.CLOUDINARY_API_KEY and settings.CLOUDINARY_API_KEY.strip():
+            try:
+                import cloudinary
+                import cloudinary.uploader
 
-            cloudinary.config(
-                cloud_name=settings.CLOUDINARY_CLOUD_NAME,
-                api_key=settings.CLOUDINARY_API_KEY,
-                api_secret=settings.CLOUDINARY_API_SECRET,
-                secure=True,
-            )
-            upload_result = cloudinary.uploader.upload(file.file)
-            return upload_result.get("secure_url", "")
+                cloudinary.config(
+                    cloud_name=settings.CLOUDINARY_CLOUD_NAME,
+                    api_key=settings.CLOUDINARY_API_KEY,
+                    api_secret=settings.CLOUDINARY_API_SECRET,
+                    secure=True,
+                )
+                upload_result = cloudinary.uploader.upload(file.file)
+                return upload_result.get("secure_url", "")
+            except Exception as e:
+                raise AppException(f"Gagal mengupload gambar ke Cloudinary: {str(e)}", 500)
+        
+        # Fallback ke penyimpanan lokal
+        try:
+            import os
+            import uuid
+            
+            # Buat direktori jika belum ada
+            public_dir = os.path.join(settings.UPLOAD_DIR, "public")
+            os.makedirs(public_dir, exist_ok=True)
+            
+            # Generate nama file unik
+            ext = os.path.splitext(file.filename)[1] if file.filename else ".jpg"
+            filename = f"{uuid.uuid4()}{ext}"
+            file_path = os.path.join(public_dir, filename)
+            
+            # Tulis file secara lokal
+            with open(file_path, "wb") as f:
+                f.write(file.file.read())
+                
+            return f"/uploads/public/{filename}"
         except Exception as e:
-            raise AppException(f"Gagal mengupload gambar: {str(e)}", 500)
+            raise AppException(f"Gagal menyimpan gambar secara lokal: {str(e)}", 500)

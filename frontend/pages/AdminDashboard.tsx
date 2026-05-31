@@ -241,7 +241,7 @@ export const AdminDashboard: React.FC = () => {
                                 {facilities.map(facility => (
                                     <div key={facility.id} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col group">
                                         <div className="h-40 overflow-hidden relative">
-                                            <img src={facility.imageUrl} alt={facility.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                                            <img src={facility.imageUrl?.startsWith('/') ? `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${facility.imageUrl}` : facility.imageUrl} alt={facility.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                                             <div className="absolute top-2 left-2 flex gap-1">
                                                 <div className="bg-white/90 px-2 py-1 rounded text-[10px] font-bold text-slate-700 uppercase tracking-wide border border-slate-200 shadow-sm">
                                                     {facility.type}

@@ -318,7 +318,7 @@ export const BookingForm: React.FC = () => {
                     <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Ringkasan</h4>
                     
                     <div className="aspect-video rounded-lg overflow-hidden mb-4 relative shadow-inner">
-                        <img src={facility.imageUrl} alt={facility.name} className="w-full h-full object-cover" />
+                        <img src={facility.imageUrl?.startsWith('/') ? `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${facility.imageUrl}` : facility.imageUrl} alt={facility.name} className="w-full h-full object-cover" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
                         <div className="absolute bottom-3 left-3 text-white font-bold text-sm shadow-black drop-shadow-md">{facility.type}</div>
                     </div>
