@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>TLS IPB - Tools Lab Sharing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Plus Jakarta Sans', 'sans-serif'],
+            },
+            colors: {
+              ipb: {
+                blue: '#004e92',
+                dark: '#002d72',
+                accent: '#f59e0b', // Yellow/Gold
+                light: '#e0f2fe',
+              }
+            },
+            animation: {
+              'fade-in-up': 'fadeInUp 0.6s ease-out forwards',
+              'fade-in': 'fadeIn 0.5s ease-out forwards',
+              'bounce-slow': 'bounce 3s infinite',
+            },
+            keyframes: {
+              fadeInUp: {
+                '0%': { opacity: '0', transform: 'translateY(20px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)' },
+              },
+              fadeIn: {
+                '0%': { opacity: '0' },
+                '100%': { opacity: '1' },
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      body {
+        background-color: #f8fafc;
+        scroll-behavior: smooth;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      
+      /* Custom Scrollbar Design - IPB Palette */
+      ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+      
+      ::-webkit-scrollbar-track {
+        background: #f1f5f9; /* Slate-100 to blend with bg */
+        border-radius: 6px;
+      }
+      
+      ::-webkit-scrollbar-thumb {
+        background: #004e92; /* IPB Blue */
+        border-radius: 6px;
+        border: 2px solid #f1f5f9; /* Creates padding effect */
+      }
+      
+      ::-webkit-scrollbar-thumb:hover {
+        background: #002d72; /* IPB Dark */
+      }
+
+      /* Firefox Support */
+      * {
+        scrollbar-width: thin;
+        scrollbar-color: #004e92 #f1f5f9;
+      }
+
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      /* Sharpen inputs */
+      input, select, textarea {
+        -webkit-appearance: none; 
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <!-- Entry Point -->
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>

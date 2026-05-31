@@ -1,0 +1,30 @@
+# Virtual Environment
+venv/
+.venv/
+env/
+ENV/
+
+# Python Cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Testing Cache
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local Environment Variables
+.env
+
+# Uploaded Files
+uploads/
+
+# IDE files
+.vscode/
+.idea/
+
+# Pyrefly local config
+pyrefly.toml
+
