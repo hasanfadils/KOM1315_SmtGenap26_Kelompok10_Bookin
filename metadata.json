@@ -1,7 +1,0 @@
-{
-  "name": "TLS IPB (Tools Lab Sharing)",
-  "description": "A modern web application for booking facilities and labs at IPB University (Tools Lab Sharing), featuring AI-powered venue recommendations and smart scheduling assistance.",
-  "requestFramePermissions": [
-    "microphone"
-  ]
-}
