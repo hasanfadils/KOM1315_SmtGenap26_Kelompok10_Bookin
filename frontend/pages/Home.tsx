@@ -1,12 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, ArrowRight, Sparkles } from 'lucide-react';
 import { AnalyticsDashboard } from '../components/AnalyticsDashboard';
 import { BookingCalendar } from '../components/BookingCalendar';
+import { api } from '../services/api';
 
 export const Home: React.FC = () => {
   const [query, setQuery] = useState('');
+  const [stats, setStats] = useState({
+      fasilitas: '...',
+      peminjaman: '...',
+      kecepatan: '...'
+  });
   const navigate = useNavigate();
+
+  useEffect(() => {
+      const fetchStats = async () => {
+          try {
+              const data = await api.get<{
+                  total_fasilitas: number;
+                  peminjaman_aktif: number;
+                  kecepatan_layanan_menit: number;
+              }>('/analytics/public');
+              
+              setStats({
+                  fasilitas: data.total_fasilitas.toString(),
+                  peminjaman: data.peminjaman_aktif.toString(),
+                  kecepatan: `${data.kecepatan_layanan_menit} Menit`
+              });
+          } catch (error) {
+              console.error('Gagal mengambil statistik:', error);
+          }
+      };
+      fetchStats();
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,10 +101,11 @@ export const Home: React.FC = () => {
       <div className="border-y border-slate-100 bg-slate-50/50">
           <div className="max-w-7xl mx-auto px-4 py-12 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
               {[
-                  { label: 'Fasilitas Terdaftar', value: '50+' },
-                  { label: 'Kampus Tercover', value: '3' },
-                  { label: 'Peminjaman Aktif', value: '1.2k' },
-                  { label: 'Kepuasan Layanan', value: '98%' },
+                  { label: 'Fasilitas Terdaftar', value: stats.fasilitas },
+                  { label: 'Peminjaman Aktif', value: stats.peminjaman },
+                  { label: 'Kecepatan Layanan', value: stats.kecepatan },
+                  { label: 'Dukungan Pelanggan', value: '24/7' },
+
               ].map((stat, i) => (
                   <div key={i}>
                       <div className="text-3xl font-bold text-ipb-blue">{stat.value}</div>

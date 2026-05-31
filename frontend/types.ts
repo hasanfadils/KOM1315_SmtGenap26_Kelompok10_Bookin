@@ -42,26 +42,43 @@ export interface User {
   nim?: string; // Optional for admin/staff
   role: 'student' | 'staff' | 'admin';
   email: string;
+  managed_ruangan_ids?: string[]; // Ruangan yang dikelola (Tendik/Admin)
   // Password is deliberately excluded from the interface used in the frontend UI for security
+}
+
+export interface DokumenItem {
+  id: string;
+  pengajuanId: string;
+  filename: string;
+  fileUrl: string;
+  fileType: string;
+  fileSize: number;
+  uploadedAt: string;
 }
 
 export interface Booking {
   id: string;
-  facilityId: string;
+  facilityId: string;   // mapped from backend ruangan_id
   userId: string;
-  userName?: string; // Added to track who booked it in Admin view
+  userName?: string;
   eventName: string;
   eventDescription: string;
   startTime: string; // ISO String
   endTime: string; // ISO String
   status: BookingStatus;
   attendees: number;
-  documentUrl?: string; // Mocked document path
+  dokumenList?: DokumenItem[];
   createdAt: string;
-  
-  // New fields for Queue Transparency
+
+  // Queue Transparency
   queuePosition?: number;
-  estimatedConfirmationDate?: string;
+
+  // Audit trail (dari backend PengajuanOut)
+  rejectionReason?: string;
+  verifiedBy?: string;
+  verifiedAt?: string;
+  approvedBy?: string;
+  approvedAt?: string;
 }
 
 // DTO for Form Submission (Separates UI from Domain)
@@ -110,6 +127,7 @@ export interface AnalyticsData {
 
 export enum NotificationType {
   BOOKING_STATUS = 'BOOKING_STATUS',
+  VERIFICATION = 'VERIFICATION',
   SYSTEM = 'SYSTEM'
 }
 

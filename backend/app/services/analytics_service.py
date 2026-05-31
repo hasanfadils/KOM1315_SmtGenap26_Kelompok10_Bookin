@@ -3,7 +3,7 @@ from typing import List
 from app.models.enums import PengajuanStatus
 from app.repositories.pengajuan_repository import PengajuanRepository
 from app.repositories.ruangan_repository import RuanganRepository
-from app.schemas.analytics import AnalyticsOut, BusyHour, PopularFacility, ServiceHealth
+from app.schemas.analytics import AnalyticsOut, BusyHour, PopularFacility, ServiceHealth, PublicStatsOut
 
 
 class AnalyticsService:
@@ -78,14 +78,8 @@ class AnalyticsService:
             for p in pengajuan_list
             if p.status == PengajuanStatus.MENUNGGU_VERIFIKASI
         ]
-        if pending:
-            wait_times = [
-                15 + (i + 1) * 5 + min(p.attendees / 50, 2) * 5
-                for i, p in enumerate(pending)
-            ]
-            avg_wait = round(sum(wait_times) / len(wait_times))
-        else:
-            avg_wait = 15
+        base_time = 5
+        avg_wait = base_time + (len(pending) * 2)
 
         return AnalyticsOut(
             busy_hours=busy_hours,
@@ -96,4 +90,27 @@ class AnalyticsService:
                 average_wait_time_minutes=avg_wait,
                 cancellation_rate=cancellation_rate,
             ),
+        )
+
+    def get_public_stats(self) -> PublicStatsOut:
+        pengajuan_list = self._pengajuan_repo.get_all()
+        ruangan_list = self._ruangan_repo.get_all()
+
+        total_fasilitas = len(ruangan_list)
+        peminjaman_aktif = sum(
+            1 for p in pengajuan_list
+            if p.status in [PengajuanStatus.MENUNGGU_VERIFIKASI, PengajuanStatus.DISETUJUI]
+        )
+
+        pending = [
+            p for p in pengajuan_list if p.status == PengajuanStatus.MENUNGGU_VERIFIKASI
+        ]
+        
+        base_time = 5
+        avg_wait = base_time + (len(pending) * 2)
+
+        return PublicStatsOut(
+            total_fasilitas=total_fasilitas,
+            peminjaman_aktif=peminjaman_aktif,
+            kecepatan_layanan_menit=avg_wait,
         )

@@ -57,6 +57,11 @@ export const MyBookings: React.FC = () => {
     return () => clearInterval(interval);
   }, [location.state, isAuthenticated, user]);
 
+  const handleStatusUpdate = async (id: string, status: BookingStatus) => {
+    const res = await BookingService.updateBookingStatus(id, status);
+    if (res.success) fetchBookings();
+  };
+
   const getFacilityDetails = (id: string): Facility | undefined => {
     return facilities[id];
   };
@@ -152,7 +157,9 @@ export const MyBookings: React.FC = () => {
                                 <div className="flex items-center gap-4 text-sm">
                                     <div className="flex flex-col md:items-end">
                                         <span className="text-blue-500 text-xs font-medium uppercase tracking-wider">Estimasi Diproses</span>
-                                        <span className="font-bold text-blue-900">{formatRelativeTime(booking.estimatedConfirmationDate)}</span>
+                                        <span className="font-bold text-blue-900">
+                                            {booking.queuePosition ? `~${booking.queuePosition * 15} menit` : '-'}
+                                        </span>
                                     </div>
                                     <div className="bg-white px-3 py-1 rounded-lg border border-blue-200 shadow-sm">
                                         <span className="text-xs text-slate-500 mr-1">Urutan ke</span>
@@ -162,11 +169,17 @@ export const MyBookings: React.FC = () => {
                             </div>
                         )}
                         
-                        {/* In Review Message */}
                         {booking.status === BookingStatus.IN_REVIEW && (
                             <div className="bg-indigo-50 border-b border-indigo-100 px-6 py-3 flex items-center gap-2 text-indigo-700">
                                 <FileSearch className="h-5 w-5" />
-                                <span className="font-semibold text-sm">Admin sedang meninjau dokumen dan ketersediaan fasilitas. Mohon tunggu.</span>
+                                <span className="font-semibold text-sm">Tendik sudah memverifikasi. Menunggu persetujuan Admin.</span>
+                            </div>
+                        )}
+
+                        {booking.status === BookingStatus.REJECTED && booking.rejectionReason && (
+                            <div className="bg-red-50 border-b border-red-100 px-6 py-3 flex items-center gap-2 text-red-700">
+                                <XCircle className="h-5 w-5" />
+                                <span className="font-semibold text-sm">Alasan penolakan: {booking.rejectionReason}</span>
                             </div>
                         )}
 
@@ -214,18 +227,32 @@ export const MyBookings: React.FC = () => {
                                 
                                 <div className="flex flex-col items-end gap-2">
                                     {isPending && user?.role !== 'admin' && (
-                                        <button className="text-red-600 hover:bg-red-50 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-slate-200 hover:border-red-200 w-full md:w-auto">
+                                        <button
+                                            onClick={async () => {
+                                                if (confirm('Apakah Anda yakin ingin membatalkan pengajuan ini?')) {
+                                                    const res = await BookingService.deleteBooking(booking.id);
+                                                    if (res.success) fetchBookings();
+                                                    else alert(res.error || 'Gagal membatalkan');
+                                                }
+                                            }}
+                                            className="text-red-600 hover:bg-red-50 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-slate-200 hover:border-red-200 w-full md:w-auto"
+                                        >
                                             Batalkan
                                         </button>
                                     )}
                                     
-                                    {/* Admin Actions */}
                                     {user?.role === 'admin' && isPending && (
                                         <div className="flex gap-2 w-full md:w-auto">
-                                             <button className="bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex-1">
+                                             <button
+                                                 onClick={() => handleStatusUpdate(booking.id, BookingStatus.REJECTED)}
+                                                 className="bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex-1"
+                                             >
                                                 Tolak
                                             </button>
-                                            <button className="bg-ipb-blue text-white hover:bg-ipb-dark px-4 py-2 rounded-lg text-sm font-medium transition-colors flex-1">
+                                            <button
+                                                onClick={() => handleStatusUpdate(booking.id, BookingStatus.APPROVED)}
+                                                className="bg-ipb-blue text-white hover:bg-ipb-dark px-4 py-2 rounded-lg text-sm font-medium transition-colors flex-1"
+                                            >
                                                 Setujui
                                             </button>
                                         </div>

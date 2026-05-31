@@ -1,4 +1,4 @@
-import { Booking, BookingStatus, ServiceResponse, BookingRequestDTO, AnalyticsData } from '../types';
+import { Booking, BookingStatus, ServiceResponse, BookingRequestDTO, AnalyticsData, DokumenItem } from '../types';
 import { api } from './api';
 
 // ===========================
@@ -8,7 +8,7 @@ import { api } from './api';
 function _mapBooking(raw: any): Booking {
   return {
     id: raw.id,
-    facilityId: raw.facility_id,
+    facilityId: raw.ruangan_id,
     userId: raw.user_id,
     userName: raw.user_name,
     eventName: raw.event_name,
@@ -17,10 +17,22 @@ function _mapBooking(raw: any): Booking {
     endTime: raw.end_time,
     status: raw.status,
     attendees: raw.attendees,
-    documentUrl: raw.document_url,
+    dokumenList: raw.dokumen_list?.map((d: any): DokumenItem => ({
+      id: d.id,
+      pengajuanId: d.pengajuan_id,
+      filename: d.filename,
+      fileUrl: d.file_url,
+      fileType: d.file_type,
+      fileSize: d.file_size,
+      uploadedAt: d.uploaded_at,
+    })),
     createdAt: raw.created_at,
     queuePosition: raw.queue_position,
-    estimatedConfirmationDate: raw.estimated_confirmation_date,
+    rejectionReason: raw.rejection_reason,
+    verifiedBy: raw.verified_by,
+    verifiedAt: raw.verified_at,
+    approvedBy: raw.approved_by,
+    approvedAt: raw.approved_at,
   };
 }
 
@@ -111,6 +123,15 @@ export class BookingService {
       return { success: true, data: _mapAnalytics(raw) };
     } catch (error: any) {
       return { success: false, error: error.message || 'Gagal mengambil data analitik' };
+    }
+  }
+
+  static async deleteBooking(bookingId: string): Promise<ServiceResponse<boolean>> {
+    try {
+      await api.del(`/bookings/${bookingId}`);
+      return { success: true, data: true };
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Gagal menghapus pengajuan' };
     }
   }
 }

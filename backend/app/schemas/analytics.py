@@ -25,3 +25,8 @@ class AnalyticsOut(BaseModel):
     busy_hours: List[BusyHour]
     popular_facilities: List[PopularFacility]
     service_health: ServiceHealth
+
+class PublicStatsOut(BaseModel):
+    total_fasilitas: int
+    peminjaman_aktif: int
+    kecepatan_layanan_menit: int

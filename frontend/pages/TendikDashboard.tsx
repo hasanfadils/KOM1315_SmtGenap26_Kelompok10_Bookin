@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Booking, BookingStatus } from '../types';
 import { BookingService } from '../services/bookingService';
-import { CheckCircle, XCircle, FileText, Clock, User, Calendar, MapPin } from 'lucide-react';
+import { api } from '../services/api';
+import { CheckCircle, XCircle, FileText, Clock, User, Calendar, MapPin, Download } from 'lucide-react';
 
 export const TendikDashboard: React.FC = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -40,9 +41,20 @@ export const TendikDashboard: React.FC = () => {
   }, []);
 
   const handleStatusUpdate = async (id: string, status: BookingStatus) => {
-    if (confirm(`Apakah Anda yakin ingin mengubah status menjadi ${status}?`)) {
-      await BookingService.updateBookingStatus(id, status);
-      fetchBookings();
+    if (status === BookingStatus.REJECTED) {
+      const reason = prompt('Masukkan alasan penolakan:');
+      if (!reason) return;
+      try {
+        await api.put(`/bookings/${id}/reject`, { reason });
+        fetchBookings();
+      } catch (err: any) {
+        alert(err.message || 'Gagal menolak pengajuan');
+      }
+    } else {
+      if (confirm(`Apakah Anda yakin ingin mengubah status menjadi ${status}?`)) {
+        await BookingService.updateBookingStatus(id, status);
+        fetchBookings();
+      }
     }
   };
 
@@ -147,18 +159,25 @@ export const TendikDashboard: React.FC = () => {
                         <div className="flex items-center gap-2">
                           <FileText className="h-5 w-5 text-ipb-blue" />
                           <div>
-                            <p className="text-sm font-medium text-slate-700">Surat Pengantar.pdf</p>
+                            <p className="text-sm font-medium text-slate-700">Surat Pengantar</p>
                             <p className="text-xs text-slate-400">Diunggah pada {new Date(booking.createdAt).toLocaleDateString()}</p>
                           </div>
                         </div>
-                        {booking.documentUrl ? (
-                          <a
-                            href="#"
-                            onClick={(e) => { e.preventDefault(); alert("Simulasi: Membuka dokumen PDF..."); }}
-                            className="text-xs font-bold text-ipb-blue hover:underline"
-                          >
-                            Lihat Dokumen
-                          </a>
+                        {booking.dokumenList && booking.dokumenList.length > 0 ? (
+                          <div className="flex flex-col gap-1 items-end">
+                            {booking.dokumenList.map(doc => (
+                              <a
+                                key={doc.id}
+                                href={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${doc.fileUrl}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-xs font-bold text-ipb-blue hover:underline flex items-center gap-1"
+                              >
+                                <Download className="h-3 w-3" />
+                                {doc.filename}
+                              </a>
+                            ))}
+                          </div>
                         ) : (
                           <span className="text-xs text-red-400 italic">Tidak ada dokumen</span>
                         )}

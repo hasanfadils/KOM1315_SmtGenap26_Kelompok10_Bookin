@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Notification, NotificationType } from '../types';
 import { NotificationService } from '../services/notificationService';
-import { Bell, Check, Mail, Info, Clock, Trash2 } from 'lucide-react';
+import { Bell, Check, Mail, Info, Clock, Trash2, CheckCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export const NotificationCenter: React.FC = () => {
@@ -41,6 +41,7 @@ export const NotificationCenter: React.FC = () => {
   const getIcon = (type: NotificationType) => {
     switch (type) {
       case NotificationType.BOOKING_STATUS: return <Clock className="h-4 w-4 text-ipb-blue" />;
+      case NotificationType.VERIFICATION: return <CheckCircle className="h-4 w-4 text-green-500" />;
       case NotificationType.SYSTEM: return <Info className="h-4 w-4 text-slate-400" />;
       default: return <Bell className="h-4 w-4 text-slate-400" />;
     }

@@ -4,7 +4,8 @@ import { FacilityService } from '../services/facilityService';
 import { Booking, BookingStatus, Facility, FacilityStatus } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle, XCircle, Clock, FileText, MapPin, Edit, Users, Search, Loader2, Plus, Trash2, AlertTriangle, FileCheck, Eye } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, FileText, MapPin, Edit, Users, Search, Loader2, Plus, Trash2, AlertTriangle, FileCheck, Eye, Download } from 'lucide-react';
+import { api } from '../services/api';
 
 export const AdminDashboard: React.FC = () => {
     const { user, isAuthenticated } = useAuth();
@@ -38,10 +39,24 @@ export const AdminDashboard: React.FC = () => {
     };
 
     const handleStatusUpdate = async (bookingId: string, status: BookingStatus) => {
-        const res = await BookingService.updateBookingStatus(bookingId, status);
-        if (res.success) {
-            // Refresh data locally
-            setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status } : b));
+        if (status === BookingStatus.REJECTED) {
+            const reason = prompt('Masukkan alasan penolakan:');
+            if (!reason) return;
+            try {
+                await api.put(`/bookings/${bookingId}/reject`, { reason });
+                loadData();
+            } catch (err: any) {
+                alert(err.message || 'Gagal menolak pengajuan');
+            }
+        } else {
+            const res = await BookingService.updateBookingStatus(bookingId, status);
+            if (res.success) {
+                if (res.data) {
+                    setBookings(prev => prev.map(b => b.id === bookingId ? res.data! : b));
+                } else {
+                    loadData();
+                }
+            }
         }
     };
 
@@ -66,16 +81,15 @@ export const AdminDashboard: React.FC = () => {
         }
     };
 
-    const handleViewDocument = (documentUrl?: string) => {
-        if (!documentUrl) {
+    const handleViewDocument = (dokumenList?: { fileUrl: string; filename: string }[]) => {
+        if (!dokumenList || dokumenList.length === 0) {
             alert("Dokumen tidak ditemukan.");
             return;
         }
-        // Open Base64 PDF in new tab
-        const win = window.open();
-        if (win) {
-            win.document.write(`<iframe src="${documentUrl}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
-        }
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+        dokumenList.forEach(doc => {
+            window.open(`${baseUrl}${doc.fileUrl}`, '_blank');
+        });
     };
 
     const getStatusColor = (status: BookingStatus) => {
@@ -174,13 +188,13 @@ export const AdminDashboard: React.FC = () => {
                                                     </div>
 
                                                     {/* DOCUMENT VIEWER BUTTON */}
-                                                    {booking.documentUrl && (
+                                                    {booking.dokumenList && booking.dokumenList.length > 0 && (
                                                         <div className="mt-3">
                                                             <button
-                                                                onClick={() => handleViewDocument(booking.documentUrl)}
+                                                                onClick={() => handleViewDocument(booking.dokumenList)}
                                                                 className="text-xs font-bold text-ipb-blue hover:text-ipb-dark flex items-center bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100 hover:border-blue-200 transition-colors w-fit"
                                                             >
-                                                                <FileCheck className="h-3.5 w-3.5 mr-1.5" /> Lihat Surat Pengantar
+                                                                <FileCheck className="h-3.5 w-3.5 mr-1.5" /> Lihat Surat Pengantar ({booking.dokumenList.length} file)
                                                             </button>
                                                         </div>
                                                     )}
