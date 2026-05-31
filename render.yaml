@@ -1,0 +1,41 @@
+services:
+  # 1. Backend Service (FastAPI)
+  - type: web
+    name: tls-ipb-backend
+    env: docker
+    dockercontext: backend
+    dockerfilePath: Dockerfile
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: tls-ipb-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ALGORITHM
+        value: HS256
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "1440"
+      - key: UPLOAD_DIR
+        value: uploads
+
+  # 2. Frontend Service (React / Vite Static Site)
+  - type: web
+    name: tls-ipb-frontend
+    env: static
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: frontend/dist
+    plan: free
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          name: tls-ipb-backend
+          property: host
+
+databases:
+  # 3. PostgreSQL Database
+  - name: tls-ipb-db
+    databaseName: ipb_fasilitas
+    user: postgres
+    plan: free
