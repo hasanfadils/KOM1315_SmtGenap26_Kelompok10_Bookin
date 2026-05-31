@@ -24,3 +24,7 @@ uploads/
 # IDE files
 .vscode/
 .idea/
+
+# Pyrefly local config
+pyrefly.toml
+

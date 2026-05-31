@@ -31,3 +31,8 @@ backend/*.pyc
 backend/uploads/
 backend/venv/
 backend/.venv/
+
+# Pyrefly local config
+pyrefly.toml
+**/pyrefly.toml
+

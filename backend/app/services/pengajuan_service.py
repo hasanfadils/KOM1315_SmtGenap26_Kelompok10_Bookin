@@ -54,8 +54,8 @@ class PengajuanService:
         documents: Optional[List[UploadFile]] = None,
     ) -> Pengajuan:
         """Mahasiswa mengajukan peminjaman ruangan baru."""
-        # 1. Validasi keberadaan dan ketersediaan ruangan
-        ruangan = self._ruangan_repo.get_by_id(data.ruangan_id)
+        # 1. Validasi keberadaan dan ketersediaan ruangan 
+        ruangan = self._ruangan_repo.get_by_id_for_update(data.ruangan_id)
         if not ruangan:
             raise NotFoundException("Ruangan", data.ruangan_id)
         if ruangan.status != RuanganStatus.AVAILABLE:
@@ -126,7 +126,7 @@ class PengajuanService:
 
         # Beri notifikasi ke mahasiswa
         self._notification_svc.create_notification(
-            user_id=pengajuan.user_id,
+            user_id=str(pengajuan.user_id),
             title="Pengajuan Diverifikasi Tendik",
             message=(
                 f'Pengajuan Anda untuk acara "{pengajuan.event_name}" '
@@ -147,6 +147,9 @@ class PengajuanService:
         pengajuan = self._pengajuan_repo.get_by_id(pengajuan_id)
         if not pengajuan:
             raise NotFoundException("Pengajuan", pengajuan_id)
+
+        # Row-level lock pada ruangan terkait untuk menserialisasi persetujuan secara konkuren
+        self._ruangan_repo.get_by_id_for_update(pengajuan.ruangan_id)
 
         if pengajuan.status != PengajuanStatus.DIVERIFIKASI_TENDIK:
             raise AppException(
@@ -172,7 +175,7 @@ class PengajuanService:
 
         # Beri notifikasi ke mahasiswa
         self._notification_svc.create_notification(
-            user_id=pengajuan.user_id,
+            user_id=str(pengajuan.user_id),
             title="Pengajuan Disetujui",
             message=(
                 f'Pengajuan Anda untuk acara "{pengajuan.event_name}" '
@@ -271,6 +274,14 @@ class PengajuanService:
         is_admin = current_user.role == UserRole.admin
         if not is_owner and not is_admin:
             raise ForbiddenException()
+
+        # Proteksi: Mahasiswa hanya boleh menghapus fisik jika status masih 'MENUNGGU_VERIFIKASI'
+        if not is_admin and pengajuan.status != PengajuanStatus.MENUNGGU_VERIFIKASI:
+            raise AppException(
+                f"Pengajuan dengan status '{pengajuan.status.value}' tidak dapat dihapus. "
+                "Hanya pengajuan dalam status 'Menunggu Persetujuan' yang dapat dihapus secara fisik.",
+                400,
+            )
 
         self._pengajuan_repo.delete(pengajuan)
         self._pengajuan_repo.commit()

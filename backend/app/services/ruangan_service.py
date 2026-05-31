@@ -44,7 +44,20 @@ class RuanganService:
         if not ruangan:
             raise NotFoundException("Ruangan", ruangan_id)
 
-        name = ruangan.name
+        # Cegah penghapusan jika ruangan memiliki pengajuan/peminjaman aktif
+        from app.models.enums import PengajuanStatus
+        has_active = any(
+            p.status not in [PengajuanStatus.DITOLAK, PengajuanStatus.SELESAI]
+            for p in ruangan.pengajuan_list
+        )
+        if has_active:
+            raise AppException(
+                "Ruangan tidak dapat dihapus karena memiliki pengajuan/peminjaman aktif. "
+                "Silakan batalkan atau selesaikan pengajuan terlebih dahulu, atau ubah status ruangan.",
+                400,
+            )
+
+        name = str(ruangan.name)
         self._ruangan_repo.delete(ruangan)
         self._ruangan_repo.commit()
         return name

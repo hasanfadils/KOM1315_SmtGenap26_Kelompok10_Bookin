@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime, timezone
+from typing import Optional
 
 from sqlalchemy import Column, String, Integer, Text, DateTime, ForeignKey, Enum as SAEnum
 from sqlalchemy.orm import relationship
@@ -15,34 +16,34 @@ class Pengajuan(Base):
 
     __tablename__ = "pengajuan"
 
-    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    ruangan_id = Column(String, ForeignKey("ruangan.id"), nullable=False)
-    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    id: str = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    ruangan_id: str = Column(String, ForeignKey("ruangan.id"), nullable=False)
+    user_id: str = Column(String, ForeignKey("users.id"), nullable=False)
 
     # Denormalisasi untuk performa baca (menghindari JOIN)
-    user_name = Column(String, nullable=False)
+    user_name: str = Column(String, nullable=False)
 
-    event_name = Column(String, nullable=False)
-    event_description = Column(Text, nullable=False)
-    start_time = Column(DateTime(timezone=True), nullable=False)
-    end_time = Column(DateTime(timezone=True), nullable=False)
-    attendees = Column(Integer, nullable=False)
+    event_name: str = Column(String, nullable=False)
+    event_description: str = Column(Text, nullable=False)
+    start_time: datetime = Column(DateTime(timezone=True), nullable=False)
+    end_time: datetime = Column(DateTime(timezone=True), nullable=False)
+    attendees: int = Column(Integer, nullable=False)
 
-    status = Column(
+    status: PengajuanStatus = Column(
         SAEnum(PengajuanStatus),
         nullable=False,
         default=PengajuanStatus.MENUNGGU_VERIFIKASI,
     )
-    queue_position = Column(Integer, nullable=True)
+    queue_position: Optional[int] = Column(Integer, nullable=True)
 
     # ── Audit trail persetujuan bertingkat ──
-    verified_by = Column(String, ForeignKey("users.id"), nullable=True)
-    verified_at = Column(DateTime(timezone=True), nullable=True)
-    approved_by = Column(String, ForeignKey("users.id"), nullable=True)
-    approved_at = Column(DateTime(timezone=True), nullable=True)
-    rejection_reason = Column(Text, nullable=True)
+    verified_by: Optional[str] = Column(String, ForeignKey("users.id"), nullable=True)
+    verified_at: Optional[datetime] = Column(DateTime(timezone=True), nullable=True)
+    approved_by: Optional[str] = Column(String, ForeignKey("users.id"), nullable=True)
+    approved_at: Optional[datetime] = Column(DateTime(timezone=True), nullable=True)
+    rejection_reason: Optional[str] = Column(Text, nullable=True)
 
-    created_at = Column(
+    created_at: datetime = Column(
         DateTime(timezone=True),
         nullable=False,
         default=lambda: datetime.now(timezone.utc),

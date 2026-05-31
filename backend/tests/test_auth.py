@@ -78,4 +78,4 @@ class TestGetMe:
 
     def test_get_me_no_token(self, client):
         response = client.get("/auth/me")
-        assert response.status_code == 401  # HTTPBearer returns 401 when no credentials
+        assert response.status_code == 403  # HTTPBearer returns 403 when no credentials

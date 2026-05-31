@@ -62,7 +62,6 @@ app = FastAPI(
     title="Sistem Peminjaman Fasilitas IPB",
     description=(
         "REST API untuk manajemen peminjaman fasilitas kampus IPB. "
-        "Arsitektur Clean + OOP: Router → Service → Repository → Model."
     ),
     version="2.0.0",
     docs_url="/docs",
@@ -108,10 +107,50 @@ async def custom_cors_middleware(request: Request, call_next):
     return response
 
 
-# ── Berkas Statis (Unggahan) ──
+# ── Berkas Statis (Uploads)  ──
 
 os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
+
+from fastapi import Depends
+from fastapi.responses import FileResponse
+from app.dependencies.auth import get_current_user
+from app.database import get_db
+from app.models.dokumen_pengajuan import DokumenPengajuan
+from app.models.enums import UserRole
+from app.exceptions.handlers import ForbiddenException, NotFoundException
+from sqlalchemy.orm import Session
+
+@app.get("/uploads/{filename}", tags=["Dokumen"])
+def get_secure_upload(
+    filename: str,
+    current_user = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Mengunduh berkas proposal peminjaman secara aman jika pengguna terotentikasi dan memiliki otorisasi."""
+    # 1. Cari dokumen di database untuk memverifikasi asosiasi dengan pengajuan
+    file_url = f"/uploads/{filename}"
+    dokumen = db.query(DokumenPengajuan).filter(DokumenPengajuan.file_url == file_url).first()
+    if not dokumen:
+        raise NotFoundException("Dokumen", filename)
+
+    # 2. Periksa otorisasi: pemilik pengajuan, tendik (staff), atau admin
+    pengajuan = dokumen.pengajuan
+    is_owner = pengajuan.user_id == current_user.id
+    is_staff = current_user.role in [UserRole.staff, UserRole.admin]
+
+    if not is_owner and not is_staff:
+        raise ForbiddenException("Anda tidak berhak mengakses dokumen ini")
+
+    # 3. Kembalikan file secara aman dari server
+    file_path = os.path.join(settings.UPLOAD_DIR, filename)
+    if not os.path.exists(file_path):
+        raise NotFoundException("File fisik", filename)
+
+    return FileResponse(
+        file_path,
+        media_type=str(dokumen.file_type),
+        filename=str(dokumen.filename)
+    )
 
 
 # ── Registrasi Router ──

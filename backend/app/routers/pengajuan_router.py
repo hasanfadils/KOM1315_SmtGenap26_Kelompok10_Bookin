@@ -77,7 +77,7 @@ def get_mine(
     current_user: User = Depends(get_current_user),
 ):
     """Ambil pengajuan milik user yang sedang login."""
-    return pengajuan_service.get_user_pengajuan(current_user.id)
+    return pengajuan_service.get_user_pengajuan(str(current_user.id))
 
 
 @router.get("/public", response_model=List[PublicPengajuanOut])
