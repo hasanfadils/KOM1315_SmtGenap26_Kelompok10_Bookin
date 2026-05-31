@@ -33,8 +33,8 @@ class Settings(BaseSettings):
         # Ubah postgres:// ke postgresql:// untuk SQLAlchemy 2.x
         if v.startswith("postgres://"):
             v = v.replace("postgres://", "postgresql://", 1)
-        # Tambahkan sslmode=require otomatis untuk Neon
-        if "neon.tech" in v and "sslmode" not in v:
+        # Tambahkan sslmode=require otomatis untuk Neon atau Supabase
+        if ("neon.tech" in v or "supabase.co" in v or "supabase.com" in v) and "sslmode" not in v:
             separator = "&" if "?" in v else "?"
             v += f"{separator}sslmode=require"
         return v
