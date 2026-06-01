@@ -67,12 +67,18 @@ class RuanganService:
         if not file.content_type or not file.content_type.startswith("image/"):
             raise AppException("File harus berupa gambar", 400)
 
-        # Jika API key Cloudinary dikonfigurasi (dan bukan placeholder), gunakan Cloudinary
+        # Jika Cloudinary dikonfigurasi lengkap (dan bukan placeholder), gunakan Cloudinary
         is_cloudinary_configured = (
             settings.CLOUDINARY_API_KEY
             and settings.CLOUDINARY_API_KEY.strip()
             and settings.CLOUDINARY_API_KEY != "your-api-key"
             and not settings.CLOUDINARY_API_KEY.startswith("your-")
+            and settings.CLOUDINARY_CLOUD_NAME
+            and settings.CLOUDINARY_CLOUD_NAME.strip()
+            and settings.CLOUDINARY_CLOUD_NAME != "your-cloud-name"
+            and settings.CLOUDINARY_API_SECRET
+            and settings.CLOUDINARY_API_SECRET.strip()
+            and settings.CLOUDINARY_API_SECRET != "your-api-secret"
         )
         if is_cloudinary_configured:
             try:

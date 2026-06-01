@@ -63,9 +63,11 @@ export const TendikDashboard: React.FC = () => {
       alert("Dokumen tidak ditemukan.");
       return;
     }
+    const token = localStorage.getItem('auth_token');
     const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
     dokumenList.forEach(doc => {
-      window.open(`${baseUrl}${doc.fileUrl}`, '_blank');
+      const url = token ? `${baseUrl}${doc.fileUrl}?token=${token}` : `${baseUrl}${doc.fileUrl}`;
+      window.open(url, '_blank');
     });
   };
 

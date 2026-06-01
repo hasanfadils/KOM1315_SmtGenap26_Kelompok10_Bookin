@@ -1,6 +1,6 @@
 """Dependensi autentikasi untuk FastAPI."""
 
-from fastapi import Depends
+from fastapi import Depends, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
@@ -11,15 +11,26 @@ from app.repositories.user_repository import UserRepository
 from app.services.auth_service import AuthService
 from app.exceptions.handlers import UnauthorizedException, ForbiddenException
 
-bearer_scheme = HTTPBearer()
+bearer_scheme = HTTPBearer(auto_error=False)
 
 
 def get_current_user(
+    request: Request,
     credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
     db: Session = Depends(get_db),
 ) -> User:
-    """Validasi token JWT, kembalikan user saat ini."""
-    payload = AuthService.decode_token(credentials.credentials)
+    """Validasi token JWT, kembalikan user saat ini (mendukung Authorization header atau query parameter 'token')."""
+    token = None
+    if credentials:
+        token = credentials.credentials
+    else:
+        # Fallback ke query parameter 'token' untuk unduhan berkas langsung
+        token = request.query_params.get("token")
+
+    if not token:
+        raise UnauthorizedException("Not authenticated")
+
+    payload = AuthService.decode_token(token)
     user_id: str = payload.get("sub")
     if not user_id:
         raise UnauthorizedException("Token tidak valid")
