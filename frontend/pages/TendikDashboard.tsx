@@ -8,7 +8,7 @@ export const TendikDashboard: React.FC = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [facilities, setFacilities] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'pending' | 'history'>('pending');
+  const [filter, setFilter] = useState<'pending' | 'review' | 'history'>('pending');
 
   const fetchBookings = async () => {
     setLoading(true);
@@ -59,7 +59,8 @@ export const TendikDashboard: React.FC = () => {
   };
 
   const filteredBookings = bookings.filter(b => {
-    if (filter === 'pending') return b.status === BookingStatus.PENDING || b.status === BookingStatus.IN_REVIEW;
+    if (filter === 'pending') return b.status === BookingStatus.PENDING;
+    if (filter === 'review') return b.status === BookingStatus.IN_REVIEW;
     if (filter === 'history') return b.status === BookingStatus.APPROVED || b.status === BookingStatus.REJECTED || b.status === BookingStatus.COMPLETED;
     return true;
   });
@@ -77,12 +78,12 @@ export const TendikDashboard: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Dashboard Tendik</h1>
           <p className="text-slate-500">Kelola pengajuan peminjaman fasilitas</p>
         </div>
-        <div className="flex gap-2 bg-white p-1 rounded-lg border border-slate-200">
+        <div className="flex flex-wrap gap-2 bg-white p-1 rounded-lg border border-slate-200 self-start sm:self-auto">
           <button
             onClick={() => setFilter('pending')}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${filter === 'pending' ? 'bg-ipb-blue text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'}`}
@@ -90,16 +91,16 @@ export const TendikDashboard: React.FC = () => {
             Perlu Tindakan
           </button>
           <button
+            onClick={() => setFilter('review')}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${filter === 'review' ? 'bg-ipb-blue text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'}`}
+          >
+            Menunggu Persetujuan
+          </button>
+          <button
             onClick={() => setFilter('history')}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${filter === 'history' ? 'bg-ipb-blue text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'}`}
           >
             Riwayat
-          </button>
-          <button
-            onClick={() => setFilter('all')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${filter === 'all' ? 'bg-ipb-blue text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'}`}
-          >
-            Semua
           </button>
         </div>
       </div>

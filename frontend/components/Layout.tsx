@@ -64,7 +64,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                  </>
               ) : isAuthenticated && user?.role === 'staff' ? (
                  <Link to="/tendik/dashboard" className={isActive('/tendik/dashboard')}>
-                    Kelola Pengajuan
+                    Tendik Dashboard
                  </Link>
               ) : isAuthenticated ? (
                  <Link to="/my-bookings" className={isActive('/my-bookings')}>
@@ -140,7 +140,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </>
               ) : isAuthenticated && user?.role === 'staff' ? (
                 <Link to="/tendik/dashboard" onClick={() => setIsMenuOpen(false)} className="text-white block px-4 py-3 rounded-xl text-base font-bold hover:bg-white/10 transition-colors">
-                    Kelola Pengajuan
+                    Tendik Dashboard
                 </Link>
               ) : isAuthenticated ? (
                 <Link to="/my-bookings" onClick={() => setIsMenuOpen(false)} className="text-white block px-4 py-3 rounded-xl text-base font-bold hover:bg-white/10 transition-colors">
@@ -176,55 +176,60 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       </main>
 
       {/* Footer */}
-      <footer className="bg-slate-900 text-white pt-16 pb-8 border-t border-slate-800">
+      <footer className="bg-ipb-dark text-white pt-16 pb-8 border-t border-blue-900/60 shadow-inner">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
                 <div className="col-span-1 md:col-span-2">
-                    <div className="flex items-center gap-2 mb-6">
-                        <University className="h-8 w-8 text-ipb-blue" />
-                        <span className="text-xl font-bold tracking-tight">TLS IPB</span>
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="bg-white/10 p-2 rounded-xl border border-white/10 shadow-inner flex items-center justify-center">
+                            <University className="h-6 w-6 text-white" />
+                        </div>
+                        <div>
+                            <span className="text-white font-extrabold text-xl tracking-tight block leading-none">TLS IPB</span>
+                            <span className="text-blue-200 text-xs font-semibold tracking-wider block leading-none mt-1">TOOLS LAB SHARING</span>
+                        </div>
                     </div>
-                    <p className="text-slate-400 text-sm leading-relaxed max-w-sm mb-6 font-medium">
+                    <p className="text-slate-300 text-sm leading-relaxed max-w-sm mb-6 font-medium">
                         Platform Tools Lab Sharing (TLS) Terintegrasi IPB University.
                         Mendukung kegiatan akademik, riset, dan kemahasiswaan dengan akses fasilitas yang mudah.
                     </p>
-                    <div className="flex gap-4">
+                    <div className="flex gap-3">
                         {/* Social Placeholders */}
-                        <div className="w-8 h-8 bg-slate-800 rounded-full hover:bg-ipb-blue transition-colors cursor-pointer flex items-center justify-center border border-slate-700">
+                        <div className="w-9 h-9 bg-blue-950/40 rounded-full hover:bg-ipb-blue hover:text-white transition-all cursor-pointer flex items-center justify-center border border-blue-800/80 text-blue-200 shadow-sm">
                             <span className="font-bold text-xs">IG</span>
                         </div>
-                        <div className="w-8 h-8 bg-slate-800 rounded-full hover:bg-ipb-blue transition-colors cursor-pointer flex items-center justify-center border border-slate-700">
+                        <div className="w-9 h-9 bg-blue-950/40 rounded-full hover:bg-ipb-blue hover:text-white transition-all cursor-pointer flex items-center justify-center border border-blue-800/80 text-blue-200 shadow-sm">
                             <span className="font-bold text-xs">X</span>
                         </div>
                     </div>
                 </div>
                 <div>
-                    <h3 className="text-white font-bold mb-6">Direktorat</h3>
-                    <ul className="space-y-4 text-sm text-slate-400 font-medium">
-                        <li>Gedung Andi Hakim Nasoetion, Lt. 1</li>
-                        <li>Kampus IPB Dramaga, Bogor 16680</li>
-                        <li>Jawa Barat, Indonesia</li>
+                    <h3 className="text-white font-bold mb-6 tracking-wide text-sm uppercase">Direktorat</h3>
+                    <ul className="space-y-4 text-sm text-slate-300 font-medium">
+                        <li className="hover:text-white transition-colors cursor-default">Gedung Andi Hakim Nasoetion, Lt. 1</li>
+                        <li className="hover:text-white transition-colors cursor-default">Kampus IPB Dramaga, Bogor 16680</li>
+                        <li className="hover:text-white transition-colors cursor-default">Jawa Barat, Indonesia</li>
                     </ul>
                 </div>
                 <div>
-                    <h3 className="text-white font-bold mb-6">Kontak</h3>
-                    <ul className="space-y-4 text-sm text-slate-400 font-medium">
-                        <li className="flex items-center gap-2">
-                             <span className="w-1.5 h-1.5 bg-ipb-accent rounded-full"></span>
+                    <h3 className="text-white font-bold mb-6 tracking-wide text-sm uppercase">Kontak</h3>
+                    <ul className="space-y-4 text-sm text-slate-300 font-medium">
+                        <li className="flex items-center gap-2.5 hover:text-white transition-colors cursor-default">
+                             <span className="w-1.5 h-1.5 bg-ipb-accent rounded-full animate-pulse"></span>
                              sarpras@apps.ipb.ac.id
                         </li>
-                        <li className="flex items-center gap-2">
-                             <span className="w-1.5 h-1.5 bg-ipb-accent rounded-full"></span>
+                        <li className="flex items-center gap-2.5 hover:text-white transition-colors cursor-default">
+                             <span className="w-1.5 h-1.5 bg-ipb-accent rounded-full animate-pulse"></span>
                              +62 251 8622642
                         </li>
                     </ul>
                 </div>
             </div>
-            <div className="pt-8 border-t border-slate-800 text-center md:text-left flex flex-col md:flex-row justify-between items-center text-slate-500 text-sm font-medium">
+            <div className="pt-8 border-t border-blue-900/60 text-center md:text-left flex flex-col md:flex-row justify-between items-center text-blue-200/50 text-sm font-medium">
                 <p>&copy; {new Date().getFullYear()} TLS IPB University. All rights reserved.</p>
                 <div className="flex gap-6 mt-4 md:mt-0">
-                    <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
-                    <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
+                    <a href="#" className="hover:text-white hover:underline transition-colors">Privacy Policy</a>
+                    <a href="#" className="hover:text-white hover:underline transition-colors">Terms of Service</a>
                 </div>
             </div>
         </div>
