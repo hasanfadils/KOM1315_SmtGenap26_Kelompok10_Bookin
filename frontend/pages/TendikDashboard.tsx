@@ -67,12 +67,12 @@ export const TendikDashboard: React.FC = () => {
 
   const getStatusColor = (status: BookingStatus) => {
     switch (status) {
-      case BookingStatus.PENDING: return 'bg-yellow-100 text-yellow-800';
-      case BookingStatus.IN_REVIEW: return 'bg-blue-100 text-blue-800';
-      case BookingStatus.APPROVED: return 'bg-green-100 text-green-800';
-      case BookingStatus.REJECTED: return 'bg-red-100 text-red-800';
-      case BookingStatus.COMPLETED: return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case BookingStatus.APPROVED: return "bg-green-100 text-green-700 border-green-200";
+      case BookingStatus.REJECTED: return "bg-red-100 text-red-700 border-red-200";
+      case BookingStatus.IN_REVIEW: return "bg-indigo-100 text-indigo-700 border-indigo-200";
+      case BookingStatus.PENDING: return "bg-yellow-50 text-yellow-700 border-yellow-200";
+      case BookingStatus.COMPLETED: return "bg-slate-100 text-slate-700 border-slate-200";
+      default: return "bg-slate-100 text-slate-700";
     }
   };
 
@@ -117,45 +117,51 @@ export const TendikDashboard: React.FC = () => {
             </div>
           ) : (
             filteredBookings.map((booking) => (
-              <div key={booking.id} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow">
-                <div className="p-6">
-                  <div className="flex flex-col md:flex-row justify-between gap-4">
+              <div key={booking.id} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col md:flex-row hover:shadow-md transition-shadow">
+                {/* Left: Status colored strip (Admin style) */}
+                <div className={`w-full md:w-2 ${
+                  booking.status === BookingStatus.PENDING ? 'bg-yellow-400' :
+                  booking.status === BookingStatus.IN_REVIEW ? 'bg-indigo-500' :
+                  booking.status === BookingStatus.APPROVED ? 'bg-green-500' :
+                  booking.status === BookingStatus.REJECTED ? 'bg-red-500' : 'bg-slate-300'
+                }`}></div>
+
+                <div className="p-6 flex-1">
+                  <div className="flex flex-col md:flex-row justify-between gap-6">
                     {/* Left: Info */}
                     <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide ${getStatusColor(booking.status)}`}>
+                      <div className="flex flex-wrap items-center gap-2 mb-2.5">
+                        <span className={`text-xs px-2.5 py-0.5 rounded border font-medium ${getStatusColor(booking.status)}`}>
                           {booking.status}
                         </span>
                         <span className="text-xs text-slate-400 font-mono">#{booking.id}</span>
-                        <span className="text-xs text-slate-400">• {new Date(booking.createdAt).toLocaleDateString()}</span>
+                        <span className="text-xs text-slate-500 font-medium flex items-center bg-slate-100 px-2.5 py-0.5 rounded-full">
+                          <User className="h-3 w-3 mr-1 text-slate-400" /> {booking.userName || 'Unknown User'}
+                        </span>
                       </div>
 
-                      <h3 className="text-lg font-bold text-slate-900 mb-1">{booking.eventName}</h3>
-                      <p className="text-slate-600 text-sm mb-4 line-clamp-2">{booking.eventDescription}</p>
+                      <h3 className="text-lg font-bold text-slate-800 mb-1">{booking.eventName}</h3>
+                      <p className="text-slate-600 text-sm mb-4 line-clamp-2 leading-relaxed">{booking.eventDescription}</p>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-8 text-sm text-slate-600">
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4 text-slate-400" />
-                          <span className="font-medium">{booking.userName || 'Unknown User'}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <MapPin className="h-4 w-4 text-slate-400" />
-                          <span>Fasilitas: <span className="font-mono font-bold">{facilities[booking.facilityId] || booking.facilityId}</span></span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-slate-400" />
+                      <div className="flex flex-wrap gap-x-6 gap-y-2.5 mt-3 text-sm text-slate-500">
+                        <div className="flex items-center">
+                          <Calendar className="h-4 w-4 mr-1.5 text-slate-400" />
                           <span>{new Date(booking.startTime).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4 text-slate-400" />
+                        <div className="flex items-center">
+                          <Clock className="h-4 w-4 mr-1.5 text-slate-400" />
                           <span>
                             {new Date(booking.startTime).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} -
                             {new Date(booking.endTime).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
+                        <div className="flex items-center">
+                          <MapPin className="h-4 w-4 mr-1.5 text-slate-400" />
+                          <span>Fasilitas: <span className="font-bold text-slate-700">{facilities[booking.facilityId] || booking.facilityId}</span></span>
+                        </div>
                       </div>
 
-                      {/* Document Section */}
+                      {/* Document Section (Polished Admin-inspired style) */}
                       <div className="mt-4 p-3 bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <FileText className="h-5 w-5 text-ipb-blue" />
@@ -165,14 +171,14 @@ export const TendikDashboard: React.FC = () => {
                           </div>
                         </div>
                         {booking.dokumenList && booking.dokumenList.length > 0 ? (
-                          <div className="flex flex-col gap-1 items-end">
+                          <div className="flex flex-col gap-1.5 items-end">
                             {booking.dokumenList.map(doc => (
                               <a
                                 key={doc.id}
                                 href={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${doc.fileUrl}`}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="text-xs font-bold text-ipb-blue hover:underline flex items-center gap-1"
+                                className="text-xs font-bold text-ipb-blue hover:text-ipb-dark hover:underline flex items-center gap-1.5 bg-white px-2.5 py-1 rounded border border-slate-200 shadow-sm transition-colors"
                               >
                                 <Download className="h-3 w-3" />
                                 {doc.filename}
@@ -186,39 +192,42 @@ export const TendikDashboard: React.FC = () => {
                     </div>
 
                     {/* Right: Actions */}
-                    {(booking.status === BookingStatus.PENDING || booking.status === BookingStatus.IN_REVIEW) && (
-                      <div className="flex flex-col gap-2 justify-center border-l border-slate-100 pl-0 md:pl-6">
-                        {booking.status === BookingStatus.PENDING && (
-                          <>
-                            <button 
-                              onClick={() => handleStatusUpdate(booking.id, BookingStatus.IN_REVIEW)}
-                              className="flex items-center justify-center gap-2 bg-ipb-blue hover:bg-ipb-dark text-white px-4 py-2 rounded-lg font-bold text-sm transition-colors shadow-sm w-full md:w-auto"
-                            >
-                              <CheckCircle className="h-4 w-4" /> Verifikasi Dokumen
-                            </button>
-                            <button 
-                              onClick={() => handleStatusUpdate(booking.id, BookingStatus.REJECTED)}
-                              className="flex items-center justify-center gap-2 bg-white border border-red-200 text-red-600 hover:bg-red-50 px-4 py-2 rounded-lg font-bold text-sm transition-colors w-full md:w-auto"
-                            >
-                              <XCircle className="h-4 w-4" /> Tolak
-                            </button>
-                          </>
-                        )}
-                        {booking.status === BookingStatus.IN_REVIEW && (
-                          <>
-                            <div className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1.5 rounded-lg border border-emerald-100 text-center flex items-center gap-1">
-                              <Clock className="h-3.5 w-3.5 text-emerald-600" /> Menunggu Persetujuan Admin
-                            </div>
-                            <button 
-                              onClick={() => handleStatusUpdate(booking.id, BookingStatus.REJECTED)}
-                              className="flex items-center justify-center gap-2 bg-white border border-red-200 text-red-600 hover:bg-red-50 px-4 py-1.5 rounded-lg font-bold text-xs transition-colors w-full md:w-auto mt-1"
-                            >
-                              <XCircle className="h-3 w-3" /> Batalkan/Tolak
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    )}
+                    <div className="flex flex-col gap-2.5 justify-center border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 pl-0 md:pl-6 min-w-[200px]">
+                      {booking.status === BookingStatus.PENDING && (
+                        <>
+                          <button 
+                            onClick={() => handleStatusUpdate(booking.id, BookingStatus.IN_REVIEW)}
+                            className="flex items-center justify-center gap-2 bg-ipb-blue hover:bg-ipb-dark text-white px-4 py-2.5 rounded-lg font-bold text-sm transition-colors shadow-sm w-full"
+                          >
+                            <CheckCircle className="h-4 w-4" /> Verifikasi Dokumen
+                          </button>
+                          <button 
+                            onClick={() => handleStatusUpdate(booking.id, BookingStatus.REJECTED)}
+                            className="flex items-center justify-center gap-2 bg-white border border-red-200 text-red-600 hover:bg-red-50 px-4 py-2.5 rounded-lg font-bold text-sm transition-colors w-full"
+                          >
+                            <XCircle className="h-4 w-4" /> Tolak
+                          </button>
+                        </>
+                      )}
+                      {booking.status === BookingStatus.IN_REVIEW && (
+                        <>
+                          <div className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-2.5 rounded-lg border border-emerald-100 text-center flex items-center justify-center gap-1.5">
+                            <Clock className="h-4 w-4 text-emerald-600 animate-pulse" /> Menunggu Persetujuan Admin
+                          </div>
+                          <button 
+                            onClick={() => handleStatusUpdate(booking.id, BookingStatus.REJECTED)}
+                            className="flex items-center justify-center gap-1.5 bg-white border border-red-200 text-red-600 hover:bg-red-50 px-4 py-1.5 rounded-lg font-bold text-xs transition-colors w-full mt-1"
+                          >
+                            <XCircle className="h-3.5 w-3.5" /> Batalkan/Tolak
+                          </button>
+                        </>
+                      )}
+                      {(booking.status === BookingStatus.APPROVED || booking.status === BookingStatus.REJECTED || booking.status === BookingStatus.COMPLETED) && (
+                        <div className="text-center text-sm font-medium text-slate-400 italic">
+                          Selesai diproses
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
