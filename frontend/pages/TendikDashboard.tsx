@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Booking, BookingStatus } from '../types';
 import { BookingService } from '../services/bookingService';
 import { api } from '../services/api';
-import { CheckCircle, XCircle, FileText, Clock, User, Calendar, MapPin, Download } from 'lucide-react';
+import { CheckCircle, XCircle, FileText, Clock, User, Calendar, MapPin, Download, FileCheck, Users } from 'lucide-react';
 
 export const TendikDashboard: React.FC = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -56,6 +56,17 @@ export const TendikDashboard: React.FC = () => {
         fetchBookings();
       }
     }
+  };
+
+  const handleViewDocument = (dokumenList?: { fileUrl: string; filename: string }[]) => {
+    if (!dokumenList || dokumenList.length === 0) {
+      alert("Dokumen tidak ditemukan.");
+      return;
+    }
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    dokumenList.forEach(doc => {
+      window.open(`${baseUrl}${doc.fileUrl}`, '_blank');
+    });
   };
 
   const filteredBookings = bookings.filter(b => {
@@ -143,52 +154,32 @@ export const TendikDashboard: React.FC = () => {
                       <h3 className="text-lg font-bold text-slate-800 mb-1">{booking.eventName}</h3>
                       <p className="text-slate-600 text-sm mb-4 line-clamp-2 leading-relaxed">{booking.eventDescription}</p>
 
-                      <div className="flex flex-wrap gap-x-6 gap-y-2.5 mt-3 text-sm text-slate-500">
-                        <div className="flex items-center">
-                          <Calendar className="h-4 w-4 mr-1.5 text-slate-400" />
-                          <span>{new Date(booking.startTime).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</span>
-                        </div>
+                      <div className="flex flex-wrap gap-4 mt-3 text-sm text-slate-500">
                         <div className="flex items-center">
                           <Clock className="h-4 w-4 mr-1.5 text-slate-400" />
-                          <span>
-                            {new Date(booking.startTime).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} -
-                            {new Date(booking.endTime).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
-                          </span>
+                          {new Date(booking.startTime).toLocaleDateString()} {new Date(booking.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </div>
                         <div className="flex items-center">
                           <MapPin className="h-4 w-4 mr-1.5 text-slate-400" />
-                          <span>Fasilitas: <span className="font-bold text-slate-700">{facilities[booking.facilityId] || booking.facilityId}</span></span>
+                          {facilities[booking.facilityId] || booking.facilityId}
+                        </div>
+                        <div className="flex items-center">
+                          <Users className="h-4 w-4 mr-1.5 text-slate-400" />
+                          {booking.attendees} Orang
                         </div>
                       </div>
 
-                      {/* Document Section (Polished Admin-inspired style) */}
-                      <div className="mt-4 p-3 bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <FileText className="h-5 w-5 text-ipb-blue" />
-                          <div>
-                            <p className="text-sm font-medium text-slate-700">Surat Pengantar</p>
-                            <p className="text-xs text-slate-400">Diunggah pada {new Date(booking.createdAt).toLocaleDateString()}</p>
-                          </div>
+                      {/* DOCUMENT VIEWER BUTTON */}
+                      {booking.dokumenList && booking.dokumenList.length > 0 && (
+                        <div className="mt-3">
+                          <button
+                            onClick={() => handleViewDocument(booking.dokumenList)}
+                            className="text-xs font-bold text-ipb-blue hover:text-ipb-dark flex items-center bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100 hover:border-blue-200 transition-colors w-fit"
+                          >
+                            <FileCheck className="h-3.5 w-3.5 mr-1.5" /> Lihat Surat Pengantar ({booking.dokumenList.length} file)
+                          </button>
                         </div>
-                        {booking.dokumenList && booking.dokumenList.length > 0 ? (
-                          <div className="flex flex-col gap-1.5 items-end">
-                            {booking.dokumenList.map(doc => (
-                              <a
-                                key={doc.id}
-                                href={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${doc.fileUrl}`}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="text-xs font-bold text-ipb-blue hover:text-ipb-dark hover:underline flex items-center gap-1.5 bg-white px-2.5 py-1 rounded border border-slate-200 shadow-sm transition-colors"
-                              >
-                                <Download className="h-3 w-3" />
-                                {doc.filename}
-                              </a>
-                            ))}
-                          </div>
-                        ) : (
-                          <span className="text-xs text-red-400 italic">Tidak ada dokumen</span>
-                        )}
-                      </div>
+                      )}
                     </div>
 
                     {/* Right: Actions */}
