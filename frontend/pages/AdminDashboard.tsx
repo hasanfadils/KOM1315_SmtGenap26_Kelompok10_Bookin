@@ -11,6 +11,7 @@ export const AdminDashboard: React.FC = () => {
     const { user, isAuthenticated } = useAuth();
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<'bookings' | 'facilities'>('bookings');
+    const [bookingFilter, setBookingFilter] = useState<'all' | 'pending' | 'review' | 'history'>('all');
 
     // Data State
     const [bookings, setBookings] = useState<Booking[]>([]);
@@ -148,10 +149,48 @@ export const AdminDashboard: React.FC = () => {
                     {/* BOOKINGS TAB */}
                     {activeTab === 'bookings' && (
                         <div className="space-y-4">
-                            {bookings.length === 0 ? (
-                                <div className="text-center py-10 text-slate-500">Belum ada data peminjaman.</div>
+                            {/* Sub-filter tabs */}
+                            <div className="flex flex-wrap gap-2 bg-white p-1 rounded-lg border border-slate-200 w-fit mb-2">
+                              <button
+                                onClick={() => setBookingFilter('all')}
+                                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${bookingFilter === 'all' ? 'bg-ipb-blue text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'}`}
+                              >
+                                Semua
+                              </button>
+                              <button
+                                onClick={() => setBookingFilter('pending')}
+                                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${bookingFilter === 'pending' ? 'bg-ipb-blue text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'}`}
+                              >
+                                Menunggu Verifikasi
+                              </button>
+                              <button
+                                onClick={() => setBookingFilter('review')}
+                                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${bookingFilter === 'review' ? 'bg-ipb-blue text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'}`}
+                              >
+                                Perlu Persetujuan
+                              </button>
+                              <button
+                                onClick={() => setBookingFilter('history')}
+                                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${bookingFilter === 'history' ? 'bg-ipb-blue text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'}`}
+                              >
+                                Riwayat
+                              </button>
+                            </div>
+
+                            {bookings.filter(b => {
+                              if (bookingFilter === 'pending') return b.status === BookingStatus.PENDING;
+                              if (bookingFilter === 'review') return b.status === BookingStatus.IN_REVIEW;
+                              if (bookingFilter === 'history') return b.status === BookingStatus.APPROVED || b.status === BookingStatus.REJECTED || b.status === BookingStatus.COMPLETED;
+                              return true;
+                            }).length === 0 ? (
+                                <div className="text-center py-10 text-slate-500 bg-white rounded-xl border border-dashed border-slate-300">Tidak ada data pengajuan.</div>
                             ) : (
-                                bookings.map(booking => (
+                                bookings.filter(b => {
+                                  if (bookingFilter === 'pending') return b.status === BookingStatus.PENDING;
+                                  if (bookingFilter === 'review') return b.status === BookingStatus.IN_REVIEW;
+                                  if (bookingFilter === 'history') return b.status === BookingStatus.APPROVED || b.status === BookingStatus.REJECTED || b.status === BookingStatus.COMPLETED;
+                                  return true;
+                                }).map(booking => (
                                     <div key={booking.id} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col md:flex-row">
                                         <div className={`w-full md:w-2 ${booking.status === BookingStatus.PENDING ? 'bg-yellow-400' :
                                                 booking.status === BookingStatus.IN_REVIEW ? 'bg-indigo-500' :
