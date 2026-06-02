@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Search, Calendar, Menu, X, University, UserCircle, LogOut, ChevronDown, User, Bell } from 'lucide-react';
+import { LayoutDashboard, Search, Calendar, Menu, X, University, UserCircle, LogOut, ChevronDown, User, Bell, MapPin, Mail, Phone } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { NotificationCenter } from './NotificationCenter';
 
@@ -178,9 +178,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Footer */}
       <footer className="bg-ipb-dark text-white pt-16 pb-8 border-t border-blue-900/60 shadow-inner">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
-                <div className="col-span-1 md:col-span-2">
-                    <div className="flex items-center gap-3 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
+                {/* Brand Column */}
+                <div>
+                    <div className="flex items-center gap-3 mb-5">
                         <div className="bg-white/10 p-2 rounded-xl border border-white/10 shadow-inner flex items-center justify-center">
                             <University className="h-6 w-6 text-white" />
                         </div>
@@ -189,47 +190,56 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                             <span className="text-blue-200 text-xs font-semibold tracking-wider block leading-none mt-1">TOOLS LAB SHARING</span>
                         </div>
                     </div>
-                    <p className="text-slate-300 text-sm leading-relaxed max-w-sm mb-6 font-medium">
-                        Platform Tools Lab Sharing (TLS) Terintegrasi IPB University.
-                        Mendukung kegiatan akademik, riset, dan kemahasiswaan dengan akses fasilitas yang mudah.
+                    <p className="text-slate-300 text-sm leading-relaxed max-w-xs font-medium">
+                        Sistem manajemen fasilitas dan peralatan terpadu IPB University untuk mendukung riset dan kolaborasi akademik yang unggul.
                     </p>
-                    <div className="flex gap-3">
-                        {/* Social Placeholders */}
-                        <div className="w-9 h-9 bg-blue-950/40 rounded-full hover:bg-ipb-blue hover:text-white transition-all cursor-pointer flex items-center justify-center border border-blue-800/80 text-blue-200 shadow-sm">
-                            <span className="font-bold text-xs">IG</span>
-                        </div>
-                        <div className="w-9 h-9 bg-blue-950/40 rounded-full hover:bg-ipb-blue hover:text-white transition-all cursor-pointer flex items-center justify-center border border-blue-800/80 text-blue-200 shadow-sm">
-                            <span className="font-bold text-xs">X</span>
-                        </div>
-                    </div>
                 </div>
+
+                {/* Direktorat Column */}
                 <div>
                     <h3 className="text-white font-bold mb-6 tracking-wide text-sm uppercase">Direktorat</h3>
                     <ul className="space-y-4 text-sm text-slate-300 font-medium">
-                        <li className="hover:text-white transition-colors cursor-default">Gedung Andi Hakim Nasoetion, Lt. 1</li>
-                        <li className="hover:text-white transition-colors cursor-default">Kampus IPB Dramaga, Bogor 16680</li>
-                        <li className="hover:text-white transition-colors cursor-default">Jawa Barat, Indonesia</li>
+                        <li><a href="#" className="hover:text-white transition-colors">Direktorat Riset & Inovasi</a></li>
+                        <li><a href="#" className="hover:text-white transition-colors">Direktorat Sarana Prasarana</a></li>
+                        <li><a href="#" className="hover:text-white transition-colors">Direktorat Sistem Informasi</a></li>
                     </ul>
                 </div>
+
+                {/* Tautan Cepat Column */}
+                <div>
+                    <h3 className="text-white font-bold mb-6 tracking-wide text-sm uppercase">Tautan Cepat</h3>
+                    <ul className="space-y-4 text-sm text-slate-300 font-medium">
+                        <li><a href="#" className="hover:text-white transition-colors">Panduan Peminjaman</a></li>
+                        <li><a href="#" className="hover:text-white transition-colors">Ketentuan Layanan</a></li>
+                        <li><a href="#" className="hover:text-white transition-colors">FAQ</a></li>
+                        <li><a href="#" className="hover:text-white transition-colors">Laporan Kerusakan</a></li>
+                    </ul>
+                </div>
+
+                {/* Kontak Column */}
                 <div>
                     <h3 className="text-white font-bold mb-6 tracking-wide text-sm uppercase">Kontak</h3>
                     <ul className="space-y-4 text-sm text-slate-300 font-medium">
-                        <li className="flex items-center gap-2.5 hover:text-white transition-colors cursor-default">
-                             <span className="w-1.5 h-1.5 bg-ipb-accent rounded-full animate-pulse"></span>
-                             sarpras@apps.ipb.ac.id
+                        <li className="flex items-start gap-3">
+                            <MapPin className="h-4 w-4 text-slate-400 mt-0.5 flex-shrink-0" />
+                            <span>Gedung Andi Hakim Nasoetion Lt. 2, Kampus IPB Dramaga, Bogor</span>
                         </li>
-                        <li className="flex items-center gap-2.5 hover:text-white transition-colors cursor-default">
-                             <span className="w-1.5 h-1.5 bg-ipb-accent rounded-full animate-pulse"></span>
-                             +62 251 8622642
+                        <li className="flex items-center gap-3">
+                            <Mail className="h-4 w-4 text-slate-400 flex-shrink-0" />
+                            <span>tls@apps.ipb.ac.id</span>
+                        </li>
+                        <li className="flex items-center gap-3">
+                            <Phone className="h-4 w-4 text-slate-400 flex-shrink-0" />
+                            <span>(0251) 8622642</span>
                         </li>
                     </ul>
                 </div>
             </div>
-            <div className="pt-8 border-t border-blue-900/60 text-center md:text-left flex flex-col md:flex-row justify-between items-center text-blue-200/50 text-sm font-medium">
-                <p>&copy; {new Date().getFullYear()} TLS IPB University. All rights reserved.</p>
-                <div className="flex gap-6 mt-4 md:mt-0">
-                    <a href="#" className="hover:text-white hover:underline transition-colors">Privacy Policy</a>
-                    <a href="#" className="hover:text-white hover:underline transition-colors">Terms of Service</a>
+            <div className="pt-8 border-t border-blue-900/60 flex flex-col md:flex-row justify-between items-center text-blue-200/50 text-sm font-medium">
+                <p>&copy; {new Date().getFullYear()} IPB UNIVERSITY. ALL RIGHTS RESERVED.</p>
+                <div className="flex gap-6 mt-4 md:mt-0 uppercase tracking-wider text-xs">
+                    <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
+                    <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
                 </div>
             </div>
         </div>
