@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { BookingService } from '../services/bookingService';
 import { FacilityService } from '../services/facilityService';
+import { LaporanService } from '../services/laporanService';
 import { Booking, BookingStatus, Facility, FacilityStatus } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -10,7 +11,7 @@ import { api } from '../services/api';
 export const AdminDashboard: React.FC = () => {
     const { user, isAuthenticated } = useAuth();
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState<'bookings' | 'facilities'>('bookings');
+    const [activeTab, setActiveTab] = useState<'bookings' | 'facilities' | 'laporan'>('bookings');
     const [bookingFilter, setBookingFilter] = useState<'all' | 'pending' | 'review' | 'history'>('all');
 
     // Data State
@@ -18,13 +19,85 @@ export const AdminDashboard: React.FC = () => {
     const [facilities, setFacilities] = useState<Facility[]>([]);
     const [loading, setLoading] = useState(true);
 
+    // Laporan State
+    const [laporanData, setLaporanData] = useState<Booking[]>([]);
+    const [laporanSummary, setLaporanSummary] = useState<Record<string, { jumlah: number; persentase: number }>>({});
+    const [laporanLoading, setLaporanLoading] = useState(false);
+
+    // Laporan Filter State
+    const [filterStatus, setFilterStatus] = useState<string>('');
+    const [filterStartDate, setFilterStartDate] = useState<string>('');
+    const [filterEndDate, setFilterEndDate] = useState<string>('');
+    const [filterRuanganId, setFilterRuanganId] = useState<string>('');
+
     useEffect(() => {
         if (!isAuthenticated || user?.role !== 'admin') {
             navigate('/login');
             return;
         }
-        loadData();
+        if (activeTab === 'laporan') {
+            loadFacilitiesOnly();
+            handleGenerateLaporan();
+        } else {
+            loadData();
+        }
     }, [isAuthenticated, user, activeTab]);
+
+    const loadFacilitiesOnly = async () => {
+        const facRes = await FacilityService.getAllFacilities();
+        if (facRes.data) setFacilities(facRes.data);
+    };
+
+    const handleGenerateLaporan = async () => {
+        setLaporanLoading(true);
+        const res = await LaporanService.generate({
+            status: filterStatus || undefined,
+            startDate: filterStartDate || undefined,
+            endDate: filterEndDate || undefined,
+            ruanganId: filterRuanganId || undefined,
+        });
+        if (res.success && res.data) {
+            setLaporanData(res.data.data_peminjaman);
+            setLaporanSummary(res.data.ringkasan);
+        } else {
+            alert(res.error || 'Gagal generate laporan');
+        }
+        setLaporanLoading(false);
+    };
+
+    const handleDownloadCSV = () => {
+        if (laporanData.length === 0) {
+            alert('Tidak ada data untuk diunduh. Silakan generate laporan terlebih dahulu.');
+            return;
+        }
+
+        const headers = ['ID Peminjaman', 'Nama Acara', 'Deskripsi Acara', 'Peminjam', 'Fasilitas', 'Tanggal Mulai', 'Tanggal Selesai', 'Jumlah Peserta', 'Status'];
+        
+        const rows = laporanData.map(item => {
+            const facilityName = facilities.find(f => f.id === item.facilityId)?.name || item.facilityId;
+            return [
+                item.id,
+                `"${item.eventName.replace(/"/g, '""')}"`,
+                `"${item.eventDescription.replace(/"/g, '""')}"`,
+                `"${(item.userName || 'N/A').replace(/"/g, '""')}"`,
+                `"${facilityName.replace(/"/g, '""')}"`,
+                new Date(item.startTime).toLocaleString('id-ID'),
+                new Date(item.endTime).toLocaleString('id-ID'),
+                item.attendees,
+                item.status
+            ];
+        });
+
+        const csvContent = [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+        const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `rekap_peminjaman_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
 
     const loadData = async () => {
         setLoading(true);
@@ -124,7 +197,7 @@ export const AdminDashboard: React.FC = () => {
                 </div>
 
                 {/* Tab Switcher */}
-                <div className="bg-white p-1 rounded-lg border border-slate-200 shadow-sm flex">
+                <div className="bg-white p-1 rounded-lg border border-slate-200 shadow-sm flex flex-wrap gap-1">
                     <button
                         onClick={() => setActiveTab('bookings')}
                         className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'bookings' ? 'bg-ipb-blue text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'}`}
@@ -136,6 +209,12 @@ export const AdminDashboard: React.FC = () => {
                         className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'facilities' ? 'bg-ipb-blue text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'}`}
                     >
                         Manajemen Aset
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('laporan')}
+                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'laporan' ? 'bg-ipb-blue text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'}`}
+                    >
+                        Laporan Rekapitulasi
                     </button>
                 </div>
             </div>
@@ -334,6 +413,202 @@ export const AdminDashboard: React.FC = () => {
                                         </div>
                                     </div>
                                 ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* LAPORAN TAB */}
+                    {activeTab === 'laporan' && (
+                        <div className="space-y-6 animate-fadeIn">
+                            {/* Filter Section */}
+                            <div className="bg-white p-6 rounded-xl shadow-xs border border-slate-200">
+                                <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                    <Search className="h-5 w-5 text-ipb-blue" />
+                                    Filter Rekapitulasi Data Peminjaman
+                                </h2>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    {/* Status Filter */}
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Status</label>
+                                        <select
+                                            value={filterStatus}
+                                            onChange={(e) => setFilterStatus(e.target.value)}
+                                            className="w-full rounded-lg border border-slate-200 p-2.5 text-sm bg-slate-50 hover:bg-white transition-colors focus:ring-2 focus:ring-ipb-blue/20"
+                                        >
+                                            <option value="">Semua Status</option>
+                                            <option value="Menunggu Persetujuan">Menunggu Persetujuan</option>
+                                            <option value="Sedang Direview">Sedang Direview</option>
+                                            <option value="Disetujui">Disetujui</option>
+                                            <option value="Ditolak">Ditolak</option>
+                                            <option value="Selesai">Selesai</option>
+                                        </select>
+                                    </div>
+
+                                    {/* Start Date Filter */}
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Tanggal Mulai</label>
+                                        <input
+                                            type="date"
+                                            value={filterStartDate}
+                                            onChange={(e) => setFilterStartDate(e.target.value)}
+                                            className="w-full rounded-lg border border-slate-200 p-2.5 text-sm bg-slate-50 hover:bg-white transition-colors focus:ring-2 focus:ring-ipb-blue/20"
+                                        />
+                                    </div>
+
+                                    {/* End Date Filter */}
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Tanggal Selesai</label>
+                                        <input
+                                            type="date"
+                                            value={filterEndDate}
+                                            onChange={(e) => setFilterEndDate(e.target.value)}
+                                            className="w-full rounded-lg border border-slate-200 p-2.5 text-sm bg-slate-50 hover:bg-white transition-colors focus:ring-2 focus:ring-ipb-blue/20"
+                                        />
+                                    </div>
+
+                                    {/* Ruangan Filter */}
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Fasilitas / Ruangan</label>
+                                        <select
+                                            value={filterRuanganId}
+                                            onChange={(e) => setFilterRuanganId(e.target.value)}
+                                            className="w-full rounded-lg border border-slate-200 p-2.5 text-sm bg-slate-50 hover:bg-white transition-colors focus:ring-2 focus:ring-ipb-blue/20"
+                                        >
+                                            <option value="">Semua Ruangan</option>
+                                            {facilities.map(f => (
+                                                <option key={f.id} value={f.id}>{f.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div className="mt-6 flex justify-end">
+                                    <button
+                                        onClick={handleGenerateLaporan}
+                                        disabled={laporanLoading}
+                                        className="flex items-center gap-2 bg-ipb-blue text-white px-6 py-2.5 rounded-lg font-bold hover:bg-ipb-dark transition-colors disabled:bg-slate-300 shadow-sm"
+                                    >
+                                        {laporanLoading ? (
+                                            <>
+                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                                Memproses...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <FileText className="h-4 w-4" />
+                                                Generate Laporan
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Summary Metrics Section */}
+                            {Object.keys(laporanSummary).length > 0 && (
+                                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                                    {Object.entries(BookingStatus).map(([key, value]) => {
+                                        const metrics = laporanSummary[value] || { jumlah: 0, persentase: 0 };
+                                        
+                                        let cardColor = "bg-white border-slate-200 text-slate-800";
+                                        let badgeColor = "bg-slate-100 text-slate-700";
+                                        
+                                        if (value === BookingStatus.APPROVED) {
+                                            cardColor = "bg-green-50/50 border-green-200 text-green-900 hover:bg-green-50 transition-colors";
+                                            badgeColor = "bg-green-100 text-green-700";
+                                        } else if (value === BookingStatus.REJECTED) {
+                                            cardColor = "bg-red-50/50 border-red-200 text-red-900 hover:bg-red-50 transition-colors";
+                                            badgeColor = "bg-red-100 text-red-700";
+                                        } else if (value === BookingStatus.IN_REVIEW) {
+                                            cardColor = "bg-indigo-50/50 border-indigo-200 text-indigo-900 hover:bg-indigo-50 transition-colors";
+                                            badgeColor = "bg-indigo-100 text-indigo-700";
+                                        } else if (value === BookingStatus.PENDING) {
+                                            cardColor = "bg-yellow-50/50 border-yellow-200 text-yellow-900 hover:bg-yellow-50 transition-colors";
+                                            badgeColor = "bg-yellow-100 text-yellow-700";
+                                        } else if (value === BookingStatus.COMPLETED) {
+                                            cardColor = "bg-blue-50/50 border-blue-200 text-blue-900 hover:bg-blue-50 transition-colors";
+                                            badgeColor = "bg-blue-100 text-blue-700";
+                                        }
+
+                                        return (
+                                            <div key={key} className={`p-4 rounded-xl border shadow-sm flex flex-col justify-between ${cardColor}`}>
+                                                <div className="text-xs font-bold uppercase tracking-wider text-slate-500 line-clamp-1 mb-2">
+                                                    {value}
+                                                </div>
+                                                <div className="flex items-baseline justify-between mt-auto gap-2">
+                                                    <span className="text-2xl font-extrabold">{metrics.jumlah}</span>
+                                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${badgeColor}`}>
+                                                        {metrics.persentase}%
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+
+                            {/* Data Table Section */}
+                            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                                <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                                    <h3 className="font-bold text-slate-800">Tabel Rekapitulasi ({laporanData.length} Peminjaman)</h3>
+                                    {laporanData.length > 0 && (
+                                        <button
+                                            onClick={handleDownloadCSV}
+                                            className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition-colors shadow-sm"
+                                        >
+                                            <Download className="h-4 w-4" />
+                                            Unduh Rekap (CSV)
+                                        </button>
+                                    )}
+                                </div>
+
+                                {laporanData.length === 0 ? (
+                                    <div className="text-center py-20 text-slate-400 bg-white">
+                                        <FileText className="h-12 w-12 mx-auto mb-3 text-slate-300" />
+                                        <p>Tidak ada data peminjaman yang cocok dengan filter.</p>
+                                    </div>
+                                ) : (
+                                    <div className="overflow-x-auto">
+                                        <table className="min-w-full divide-y divide-slate-200 text-left text-sm text-slate-700">
+                                            <thead className="bg-slate-50 text-xs font-bold uppercase tracking-wider text-slate-500">
+                                                <tr>
+                                                    <th className="px-6 py-4">Nama Acara</th>
+                                                    <th className="px-6 py-4">Peminjam</th>
+                                                    <th className="px-6 py-4">Ruangan / Fasilitas</th>
+                                                    <th className="px-6 py-4">Tanggal & Waktu</th>
+                                                    <th className="px-6 py-4">Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-150 bg-white">
+                                                {laporanData.map((item) => (
+                                                    <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
+                                                        <td className="px-6 py-4">
+                                                            <div className="font-bold text-slate-900">{item.eventName}</div>
+                                                            <div className="text-xs text-slate-400 font-mono mt-0.5">#{item.id.substring(0, 8)}...</div>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <div className="font-semibold text-slate-800">{item.userName || 'N/A'}</div>
+                                                        </td>
+                                                        <td className="px-6 py-4 text-slate-600">
+                                                            {facilities.find(f => f.id === item.facilityId)?.name || item.facilityId}
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <div className="font-medium text-slate-800">
+                                                                {new Date(item.startTime).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                            </div>
+                                                            <div className="text-xs text-slate-500 mt-0.5">
+                                                                {new Date(item.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(item.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border ${getStatusColor(item.status)}`}>
+                                                                {item.status}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}

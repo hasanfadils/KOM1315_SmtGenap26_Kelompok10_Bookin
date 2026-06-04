@@ -143,7 +143,7 @@ def update_status(
     pengajuan_id: str,
     payload: StatusUpdatePayload,
     pengajuan_service: PengajuanService = Depends(get_pengajuan_service),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_admin_or_staff),
 ):
     """Jembatan update status peminjaman dari frontend ke alur persetujuan bertingkat."""
     status_lower = payload.status.lower()
@@ -153,7 +153,10 @@ def update_status(
     elif status_lower in ["disetujui", "approved"]:
         return pengajuan_service.approve(current_user, pengajuan_id)
     elif status_lower in ["ditolak", "rejected"]:
-        return pengajuan_service.reject(current_user, pengajuan_id, reason="Ditolak oleh " + current_user.role.value)
+        return pengajuan_service.reject(
+            current_user, pengajuan_id,
+            reason=f"Ditolak oleh {current_user.name} ({current_user.role.value})"
+        )
     else:
         raise HTTPException(
             status_code=400,

@@ -141,3 +141,15 @@ export interface Notification {
   isRead: boolean;
   createdAt: string;
 }
+
+// ── Laporan Rekapitulasi ──
+export interface RingkasanStatus {
+  jumlah: number;
+  persentase: number;
+}
+
+export interface LaporanResponse {
+  data_peminjaman: Booking[];
+  ringkasan: Record<string, RingkasanStatus>;
+}
+

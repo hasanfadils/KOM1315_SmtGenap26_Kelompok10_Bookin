@@ -14,7 +14,7 @@ class DokumenPengajuan(Base):
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     pengajuan_id = Column(
-        String, ForeignKey("pengajuan.id", ondelete="CASCADE"), nullable=False
+        String, ForeignKey("pengajuan.id", ondelete="CASCADE"), nullable=False, index=True
     )
     filename = Column(String, nullable=False)
     file_url = Column(String, nullable=False)

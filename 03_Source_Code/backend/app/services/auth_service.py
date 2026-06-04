@@ -10,6 +10,7 @@ from jose import JWTError, jwt
 
 from app.config import settings
 from app.models.user import User
+from app.models.enums import UserRole
 from app.schemas.auth import UserRegister
 from app.repositories.user_repository import UserRepository
 from app.exceptions.handlers import AppException, UnauthorizedException
@@ -58,18 +59,20 @@ class AuthService:
         if self._user_repo.get_by_email(data.email):
             raise AppException("Email sudah terdaftar", 400)
 
+        # SECURITY: Force role to student on public registration
+        # Admin/staff accounts must be created by existing admins via /users endpoint
         user = User(
             name=data.name,
             email=data.email,
             password_hash=self.hash_password(data.password),
             nim=data.nim,
-            role=data.role,
-            managed_ruangan_ids=data.managed_ruangan_ids,
+            role=UserRole.student,  # Always student for self-registration
+            managed_ruangan_ids=[],
         )
         self._user_repo.create(user)
         self._user_repo.commit()
 
-        token = self.create_access_token({"sub": user.id})
+        token = self.create_access_token({"sub": user.id, "role": user.role.value})
         return user, token
 
     def login(self, email: str, password: str) -> Tuple[User, str]:
@@ -78,5 +81,5 @@ class AuthService:
         if not user or not self.verify_password(password, user.password_hash):
             raise UnauthorizedException("Email atau password salah")
 
-        token = self.create_access_token({"sub": user.id})
+        token = self.create_access_token({"sub": user.id, "role": user.role.value})
         return user, token

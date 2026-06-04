@@ -26,6 +26,10 @@ class User(Base):
 
     # Relasi
     pengajuan_list = relationship(
-        "Pengajuan", back_populates="user", foreign_keys="Pengajuan.user_id"
+        "Pengajuan", back_populates="user", foreign_keys="Pengajuan.user_id",
+        cascade="all, delete-orphan",
     )
-    notifications = relationship("Notification", back_populates="user")
+    notifications = relationship(
+        "Notification", back_populates="user",
+        cascade="all, delete-orphan",
+    )

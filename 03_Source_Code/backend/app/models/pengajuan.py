@@ -17,8 +17,8 @@ class Pengajuan(Base):
     __tablename__ = "pengajuan"
 
     id: str = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    ruangan_id: str = Column(String, ForeignKey("ruangan.id"), nullable=False)
-    user_id: str = Column(String, ForeignKey("users.id"), nullable=False)
+    ruangan_id: str = Column(String, ForeignKey("ruangan.id", ondelete="RESTRICT"), nullable=False, index=True)
+    user_id: str = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
 
     # Denormalisasi untuk performa baca (menghindari JOIN)
     user_name: str = Column(String, nullable=False)
@@ -33,6 +33,7 @@ class Pengajuan(Base):
         SAEnum(PengajuanStatus),
         nullable=False,
         default=PengajuanStatus.MENUNGGU_VERIFIKASI,
+        index=True,
     )
     queue_position: Optional[int] = Column(Integer, nullable=True)
 

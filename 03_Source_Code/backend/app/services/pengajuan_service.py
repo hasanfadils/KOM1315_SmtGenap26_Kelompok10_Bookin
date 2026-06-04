@@ -158,8 +158,8 @@ class PengajuanService:
                 400,
             )
 
-        # Cek ulang bentrok (proteksi race condition)
-        if self._pengajuan_repo.check_conflict(
+        # Cek bentrok HANYA dengan yang sudah DISETUJUI (bukan pending)
+        if self._pengajuan_repo.check_approved_conflict(
             pengajuan.ruangan_id,
             pengajuan.start_time,
             pengajuan.end_time,
@@ -294,8 +294,11 @@ class PengajuanService:
     ) -> tuple[datetime, datetime]:
         """Mengubah string tanggal/waktu ke objek datetime dengan validasi."""
         try:
-            start_dt = datetime.fromisoformat(f"{date}T{start}:00")
-            end_dt = datetime.fromisoformat(f"{date}T{end}:00")
+            # Parse sebagai timezone-aware (WIB / UTC+7 default untuk IPB)
+            from zoneinfo import ZoneInfo
+            tz = ZoneInfo("Asia/Jakarta")
+            start_dt = datetime.fromisoformat(f"{date}T{start}:00").replace(tzinfo=tz)
+            end_dt = datetime.fromisoformat(f"{date}T{end}:00").replace(tzinfo=tz)
         except ValueError:
             raise ValidationException(
                 "Format tanggal atau waktu salah (gunakan YYYY-MM-DD dan HH:MM)"
@@ -306,7 +309,7 @@ class PengajuanService:
                 "Waktu selesai harus setelah waktu mulai"
             )
 
-        if start_dt < datetime.now():
+        if start_dt < datetime.now(tz):
             raise ValidationException(
                 "Tidak dapat meminjam untuk waktu yang sudah lewat"
             )

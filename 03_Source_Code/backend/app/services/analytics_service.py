@@ -16,6 +16,8 @@ class AnalyticsService:
         self._ruangan_repo = ruangan_repo
 
     def get_analytics(self) -> AnalyticsOut:
+        # NOTE: Untuk skala production, ganti dengan database aggregation query.
+        # Penggunaan get_all() di memori dapat memicu OOM jika data sangat besar.
         pengajuan_list = self._pengajuan_repo.get_all()
         ruangan_list = self._ruangan_repo.get_all()
 
@@ -93,6 +95,8 @@ class AnalyticsService:
         )
 
     def get_public_stats(self) -> PublicStatsOut:
+        # NOTE: Untuk skala production, ganti dengan database aggregation query.
+        # Penggunaan get_all() di memori dapat memicu OOM jika data sangat besar.
         pengajuan_list = self._pengajuan_repo.get_all()
         ruangan_list = self._ruangan_repo.get_all()
 

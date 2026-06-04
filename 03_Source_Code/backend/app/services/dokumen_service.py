@@ -11,6 +11,16 @@ from app.exceptions.handlers import AppException
 
 
 class DokumenService:
+    # Tipe file yang diizinkan untuk dokumen pengajuan (surat pengantar)
+    ALLOWED_EXTENSIONS = {".pdf", ".doc", ".docx", ".jpg", ".jpeg", ".png"}
+    ALLOWED_CONTENT_TYPES = {
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "image/jpeg",
+        "image/png",
+    }
+
     def __init__(self, dokumen_repo: DokumenRepository):
         self._dokumen_repo = dokumen_repo
 
@@ -26,6 +36,21 @@ class DokumenService:
             if not file.filename:
                 continue
 
+            # Validasi tipe file
+            ext = os.path.splitext(file.filename)[1].lower()
+            if ext not in self.ALLOWED_EXTENSIONS:
+                raise AppException(
+                    f"Tipe file '{ext}' tidak diizinkan. "
+                    f"Gunakan: {', '.join(self.ALLOWED_EXTENSIONS)}",
+                    400,
+                )
+
+            if file.content_type and file.content_type not in self.ALLOWED_CONTENT_TYPES:
+                raise AppException(
+                    f"Content type '{file.content_type}' tidak diizinkan.",
+                    400,
+                )
+
             # Validasi ukuran berkas
             file.file.seek(0, 2)
             file_size = file.file.tell()
@@ -39,7 +64,6 @@ class DokumenService:
                     400,
                 )
 
-            ext = os.path.splitext(file.filename)[1]
             unique_filename = f"{uuid.uuid4()}{ext}"
             file_path = os.path.join(upload_dir, unique_filename)
 

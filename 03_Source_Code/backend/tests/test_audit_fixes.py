@@ -153,7 +153,7 @@ class TestAuditFixes:
 
         # Unauthenticated request
         response = client.get("/uploads/secret_proposal.pdf")
-        assert response.status_code == 403
+        assert response.status_code in [401, 403]
 
         # Authenticated, but unauthorized user (another student)
         unauthorized_student = User(

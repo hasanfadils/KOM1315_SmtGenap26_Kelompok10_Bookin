@@ -25,6 +25,7 @@ from app.routers import (
     pengajuan_router,
     notification_router,
     analytics_router,
+    laporan_router,
 )
 from app.routers.ruangan_router import facilities_router
 from app.routers.pengajuan_router import bookings_router
@@ -84,22 +85,28 @@ async def app_exception_handler(request: Request, exc: AppException):
 
 # ── Middleware CORS (Bulletproof Custom CORS) ──
 
+ALLOWED_ORIGINS = [
+    "https://tls-ipb.vercel.app",
+    "http://localhost:5173",
+    "http://localhost:3000",
+]
+
 @app.middleware("http")
 async def custom_cors_middleware(request: Request, call_next):
-    # Intersepsi request OPTIONS (Preflight) secara instan
-    if request.method == "OPTIONS":
-        origin = request.headers.get("origin", "*")
-        response = Response("OK", status_code=200)
-        response.headers["Access-Control-Allow-Origin"] = origin
-        response.headers["Access-Control-Allow-Credentials"] = "true"
-        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
-        response.headers["Access-Control-Allow-Headers"] = request.headers.get("access-control-request-headers", "*")
-        return response
+    origin = request.headers.get("origin", "")
     
-    # Proses request biasa
+    if request.method == "OPTIONS":
+        if origin in ALLOWED_ORIGINS:
+            response = Response("OK", status_code=200)
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+            response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+            response.headers["Access-Control-Allow-Headers"] = request.headers.get("access-control-request-headers", "*")
+            return response
+        return Response("Forbidden", status_code=403)
+    
     response = await call_next(request)
-    origin = request.headers.get("origin")
-    if origin:
+    if origin in ALLOWED_ORIGINS:
         response.headers["Access-Control-Allow-Origin"] = origin
         response.headers["Access-Control-Allow-Credentials"] = "true"
         response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
@@ -165,6 +172,7 @@ app.include_router(pengajuan_router.router)
 app.include_router(bookings_router)
 app.include_router(notification_router.router)
 app.include_router(analytics_router.router)
+app.include_router(laporan_router.router)
 
 
 # ── Endpoint Root ──

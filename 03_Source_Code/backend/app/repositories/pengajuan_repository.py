@@ -37,6 +37,27 @@ class PengajuanRepository(BaseRepository[Pengajuan]):
 
         return query.first() is not None
 
+    def check_approved_conflict(
+        self,
+        ruangan_id: str,
+        start: datetime,
+        end: datetime,
+        exclude_id: Optional[str] = None,
+    ) -> bool:
+        """Cek bentrok jadwal HANYA dengan pengajuan yang sudah DISETUJUI."""
+        query = self._db.query(Pengajuan).filter(
+            Pengajuan.ruangan_id == ruangan_id,
+            Pengajuan.status == PengajuanStatus.DISETUJUI,
+            or_(
+                and_(Pengajuan.start_time <= start, Pengajuan.end_time > start),
+                and_(Pengajuan.start_time < end, Pengajuan.end_time >= end),
+                and_(Pengajuan.start_time >= start, Pengajuan.end_time <= end),
+            ),
+        )
+        if exclude_id:
+            query = query.filter(Pengajuan.id != exclude_id)
+        return query.first() is not None
+
     def get_by_user(self, user_id: str) -> List[Pengajuan]:
         """Dapatkan semua pengajuan pengguna, dari yang terbaru."""
         return (

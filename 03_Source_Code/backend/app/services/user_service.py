@@ -39,6 +39,13 @@ class UserService:
             if existing:
                 raise AppException("Email sudah digunakan", 400)
 
+        # Sync denormalized name in pengajuan if name is being changed
+        if "name" in update_data and update_data["name"] != user.name:
+            from app.models.pengajuan import Pengajuan
+            self._user_repo.session.query(Pengajuan).filter(Pengajuan.user_id == user.id).update(
+                {"user_name": update_data["name"]}, synchronize_session=False
+            )
+
         self._user_repo.update(user, update_data)
         self._user_repo.commit()
         return user
